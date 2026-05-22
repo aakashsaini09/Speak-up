@@ -2,20 +2,12 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "homepage": "https://github.com/aakashsaini09/email#readme",
-  "bugs": {
-    "url": "https://github.com/aakashsaini09/email/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/aakashsaini09/email.git"
-  },
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "src/server.js",
+  "main": "index.js",
   "scripts": {
-    "dev": "node server.js"
+    "dev": "node src/index.js"
   },
   "dependencies": {
     "express": "^5.2.1"
