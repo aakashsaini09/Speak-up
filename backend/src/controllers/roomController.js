@@ -1,8 +1,7 @@
-
+import { authentication } from "../services/authServices"
 
 export const createRoom = async (req, res) => {
-    const room =
-    await roomService.createRoom(req)
+    const response = await authentication(req)
 
     res.json(room)
 }
