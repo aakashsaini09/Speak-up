@@ -1,5 +1,4 @@
 import express from 'express'
-// import {Server} from 'socket.io'
 import http from 'http'
 import { PORT } from './config/env.js';
 import { connectToDatabase } from './config/db.js';
@@ -14,8 +13,8 @@ app.use(
     })
 )
 
-app.use('/api/user', user)
-app.use('/api/room', room)
+app.use('/user', user)
+app.use('/room', room)
 let port = process.env.PORT || 8000;
 app.listen(port,()=>{
     console.log(`Server is running on port ${PORT}`)

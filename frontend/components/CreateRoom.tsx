@@ -20,7 +20,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useState } from "react"
+import axios from "axios"
+import { toast, Toaster } from "sonner"
+interface roomTypes {
+  title: string,
+  language: string
+}
 const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open: boolean) => void }) => {
+  const [roomData, setRoomData] = useState<roomTypes>({ title: "", language: "English" })
+  function setDataFunction(e: React.ChangeEvent<HTMLInputElement>, value: string) {
+    if (value === "title") {
+      setRoomData((prev) => ({ ...prev, title: e.target.value }))
+    } else {
+      setRoomData((prev) => ({ ...prev, language: e.target.value }))
+    }
+    console.log(roomData)
+  }
+  console.log(roomData)
+  const backendUrl = process.env.BCKEND_URL ?? "";
+  const createRoomFunction = async () => {
+    try {
+      const res = await axios.post(backendUrl, roomData)
+      if (res.data?.success) {
+        toast("Room created successfully!")
+      }else{
+        toast.error("Something went wrong")
+        console.log(res.data?.message)
+      }
+    } catch (error) {
+      console.log("Error while creating room: ", error)
+      toast.error(error instanceof Error ? error.message : "An error occurred")
+    }
+
+  }
   return (
     <>
       <Dialog open={popup} onOpenChange={setPopup}>
@@ -36,15 +69,24 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
             <FieldGroup>
               <Field>
                 <Label htmlFor="title">Title</Label>
-                <Input id="title" name="title" placeholder="English speaking practice room" />
+                <Input value={roomData?.title} onChange={(e) => setDataFunction(e, "title")} id="title" name="title" placeholder="English speaking practice room" />
               </Field>
               <Field>
-                <Label htmlFor="username-1">Language</Label>
-                {/* <Input id="username-1" name="username" defaultValue="@peduarte" /> */}
-                <Select>
+                <Label htmlFor="language">Language</Label>
+
+                <Select
+                  value={roomData.language}
+                  onValueChange={(value) =>
+                    setRoomData((prev) => ({
+                      ...prev,
+                      language: value,
+                    }))
+                  }
+                >
                   <SelectTrigger className="w-45">
-                    <SelectValue placeholder="English" />
+                    <SelectValue placeholder="Select language" />
                   </SelectTrigger>
+
                   <SelectContent>
                     <SelectGroup>
                       <SelectItem value="English">English</SelectItem>
@@ -55,7 +97,7 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
                       <SelectItem value="Marathi">Marathi</SelectItem>
                       <SelectItem value="Chinese">Chinese</SelectItem>
                       <SelectItem value="Korean">Korean</SelectItem>
-                      <SelectItem value="Franch">Franch</SelectItem>
+                      <SelectItem value="French">French</SelectItem>
                       <SelectItem value="Italian">Italian</SelectItem>
                     </SelectGroup>
                   </SelectContent>
