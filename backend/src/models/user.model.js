@@ -1,10 +1,19 @@
 import mongoose from 'mongoose'
 import {Schema} from 'mongoose'
-const userSchema = new Schema({
-    googleId: String,
-    email: String,
-    name: String,
-    avatar: String
-},{timeseries, timestamps})
+const userSchema =  mongoose.Schema({
+    clerkId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    firstName: String,
+    lastName: String,
+    imageUrl: String,
+  
+},{timestamps: true})
 
-export default mongoose.model('UserSchema', userSchema) 
+module.exports = mongoose.model('User', userSchema)
