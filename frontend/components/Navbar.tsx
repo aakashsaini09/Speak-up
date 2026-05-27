@@ -1,14 +1,38 @@
 "use client"
-import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs'
+import { Show, SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs'
 
 import CreateRoomPopup from './CreateRoom'
-import { useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 const Navbar = () => {
     const [popup, setpopup] = useState(false);
+    const [userData, setUserData] = useState({
+        email: "" as string | undefined,
+        id: "",
+        firstName: "" as string | undefined,
+        fullName: "" as string | undefined,
+        imageUrl: "",
+
+    })
     function changePopup(){
         setpopup(pre => !pre)
     }
-    // console.log("userprofile data: ", UserProfile)
+    const { isLoaded, isSignedIn, user } = useUser()
+    if(user){
+        useEffect(()=> {
+            setUserData({
+                email: user?.primaryEmailAddress?.emailAddress,
+                id: user.id,
+                firstName: user?.firstName ?? undefined,
+                fullName: user?.fullName ?? undefined,
+                imageUrl: user?.imageUrl
+            })
+            storeUserInfotoDb()
+        }, [])
+    }
+    const storeUserInfotoDb = () => {
+
+    }
+    console.log("useUser data: ", userData)
     return (
         <>
             <div className='bg-black'>
