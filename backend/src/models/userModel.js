@@ -6,6 +6,11 @@ const userSchema =  mongoose.Schema({
       required: true,
       unique: true,
     },
+    google_id: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     email: {
       type: String,
       required: true,

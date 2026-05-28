@@ -12,47 +12,37 @@ const clerkWebhookController = async (req, res) => {
       "svix-timestamp": req.headers["svix-timestamp"],
       "svix-signature": req.headers["svix-signature"],
     };
-
     const wh = new Webhook(
       CLERK_WEBHOOK_SECRET
     );
-
     const evt = wh.verify(payload, headers);
-
     const data = evt.data;
-
     // ======================
     // USER CREATED
     // ======================
-
+    console.log("Data being saved in mongo: ", data.external_accounts[0].google_id)
     if (evt.type === "user.created") {
       const existingUser = await User.findOne({
         clerkId: data.id,
       });
-
       if (!existingUser) {
         await User.create({
           clerkId: data.id,
-
           email:
             data.email_addresses?.[0]
               ?.email_address || "",
 
           firstName: data.first_name,
-
-          lastName: data.last_name,
-
+          lastName: data?.last_name,
           imageUrl: data.image_url,
+          google_id: data.external_accounts[0].google_id
         });
-
         console.log("User created");
       }
     }
-
     // ======================
     // USER UPDATED
     // ======================
-
     if (evt.type === "user.updated") {
       await User.findOneAndUpdate(
         { clerkId: data.id },
@@ -60,44 +50,31 @@ const clerkWebhookController = async (req, res) => {
           email:
             data.email_addresses?.[0]
               ?.email_address || "",
-
           firstName: data.first_name,
-
           lastName: data.last_name,
-
           imageUrl: data.image_url,
         }
       );
-
       console.log("User updated");
     }
-
     // ======================
     // USER DELETED
     // ======================
-
     if (evt.type === "user.deleted") {
       await User.findOneAndDelete({
         clerkId: data.id,
       });
-
       console.log("User deleted");
     }
-
     return res.status(200).json({
       success: true,
     });
   } catch (error) {
     console.log(error);
-
     return res.status(400).json({
       success: false,
       message: "Webhook error",
     });
   }
 };
-
 export {clerkWebhookController}
-// module.exports = {
-//   clerkWebhookController,
-// };
