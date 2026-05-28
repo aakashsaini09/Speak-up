@@ -1,7 +1,9 @@
 import { Webhook } from "svix";
 import User from '../models/userModel.js'
+import { CLERK_WEBHOOK_SECRET } from "../config/env.js";
 
 const clerkWebhookController = async (req, res) => {
+  console.log("reached inside clerkwebhookcontroller")
   try {
     const payload = req.body.toString();
 
@@ -12,7 +14,7 @@ const clerkWebhookController = async (req, res) => {
     };
 
     const wh = new Webhook(
-      process.env.CLERK_WEBHOOK_SECRET
+      CLERK_WEBHOOK_SECRET
     );
 
     const evt = wh.verify(payload, headers);

@@ -17,18 +17,15 @@ const Navbar = () => {
         setpopup(pre => !pre)
     }
     const { isLoaded, isSignedIn, user } = useUser()
-    if(user){
-        useEffect(()=> {
-            setUserData({
-                email: user?.primaryEmailAddress?.emailAddress,
-                id: user.id,
-                firstName: user?.firstName ?? undefined,
-                fullName: user?.fullName ?? undefined,
-                imageUrl: user?.imageUrl
-            })
-            storeUserInfotoDb()
-        }, [])
-    }
+    // if(user){
+    //         setUserData({
+    //             email: user?.primaryEmailAddress?.emailAddress,
+    //             id: user.id,
+    //             firstName: user?.firstName ?? undefined,
+    //             fullName: user?.fullName ?? undefined,
+    //             imageUrl: user?.imageUrl
+    //         })
+    // }
     const storeUserInfotoDb = () => {
 
     }
