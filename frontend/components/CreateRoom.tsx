@@ -37,11 +37,10 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
     }
     console.log(roomData)
   }
-  console.log(roomData)
   const backendUrl = process.env.BCKEND_URL ?? "";
   const createRoomFunction = async () => {
     try {
-      const res = await axios.post(backendUrl, roomData)
+      const res = await axios.post(`${backendUrl}/api/room`, {roomData}, {})
       if (res.data?.success) {
         toast("Room created successfully!")
       }else{

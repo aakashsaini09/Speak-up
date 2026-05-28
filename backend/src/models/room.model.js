@@ -2,12 +2,24 @@ import mongoose from 'mongoose'
 import {Schema} from 'mongoose'
 const roomSchema = new Schema({
     _id: ObjectId,
-    title: String,
-    language: String,
-    creatorId: String,
+    title: {
+        type: String,
+        require: true
+    },
+    language: {
+        type: String,
+        require: true
+    },
+    creatorId: {
+        type: String,
+        require: true
+    },
     createdAt: Date,
     activeParticipants: Number,
     lastActiveAt: Date
-},{timeseries, timestamps})
+},{ timestamps: true})
 
-export default mongoose.model('RoomSchema', roomSchema) 
+export default mongoose.model('Room', roomSchema) 
+{
+  isActive
+}
