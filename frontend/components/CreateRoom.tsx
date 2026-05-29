@@ -23,6 +23,7 @@ import {
 import { useState } from "react"
 import axios from "axios"
 import { toast, Toaster } from "sonner"
+import { getToken, useUser } from "@clerk/nextjs"
 interface roomTypes {
   title: string,
   language: string
@@ -38,21 +39,45 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
     console.log(roomData)
   }
   const backendUrl = process.env.BCKEND_URL ?? "";
-  const createRoomFunction = async () => {
-    try {
-      const res = await axios.post(`${backendUrl}/api/room`, {roomData}, {})
-      if (res.data?.success) {
-        toast("Room created successfully!")
-      }else{
-        toast.error("Something went wrong")
-        console.log(res.data?.message)
-      }
-    } catch (error) {
-      console.log("Error while creating room: ", error)
-      toast.error(error instanceof Error ? error.message : "An error occurred")
-    }
+  const { user } = useUser()
+    console.log("useUser data: ", user)
 
+ const createRoomFunction = async () => {
+  if(roomData.title.length <=5){
+    toast("Title is too short!!")
+    return;
   }
+  if(!roomData.language){
+    setRoomData((prev) => ({ ...prev, language: 'English'}))
+  }
+  try {
+    const token = await getToken();
+
+    const res = await axios.post(
+      `${backendUrl}/api/room`,
+      roomData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (res.data?.success) {
+      toast.success("Room created successfully!");
+    } else {
+      toast.error("Something went wrong");
+    }
+  } catch (error) {
+    console.log("Error while creating room:", error);
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "An error occurred"
+    );
+  }
+};
   return (
     <>
       <Dialog open={popup} onOpenChange={setPopup}>
@@ -107,7 +132,7 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
               <DialogClose asChild>
                 <Button variant="outline" className='cursor-pointer'>Cancel</Button>
               </DialogClose>
-              <Button type="submit" className='cursor-pointer'>Save changes</Button>
+              <Button type="submit" className='cursor-pointer' onClick={createRoomFunction}>Create Room</Button>
             </DialogFooter>
           </DialogContent>
         </form>

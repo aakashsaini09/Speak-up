@@ -10,6 +10,7 @@
     "dev": "nodemon src/index.js"
   },
   "dependencies": {
+    "@clerk/backend": "^3.4.14",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

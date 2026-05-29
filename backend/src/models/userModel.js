@@ -15,6 +15,7 @@ const userSchema =  mongoose.Schema({
       type: String,
       required: true,
     },
+    creatorId: ObjectId,
     firstName: String,
     lastName: String,
     imageUrl: String,
