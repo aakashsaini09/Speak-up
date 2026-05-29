@@ -7,18 +7,24 @@ import cors from 'cors'
 import 'dotenv/config';
 import roomRoutes from './routes/room.route.js';
 const MONGO_URL = process.env.MONGO_URL;
-const app = express(cors());
+const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 app.use("/api/clerk", router);
 app.use(express.json());
 export const server = http.createServer(app);
 connectToDatabase()
-app.use(
-    cors({
-        origin: "http:localhost",
-        methods: ["GET", "POST"],
-        credentials: true
-    })
-)
+// app.use(
+//     cors({
+//         origin: "http:localhost",
+//         methods: ["GET", "POST"],
+//         credentials: true
+//     })
+// )
 
 app.use('/api/room', roomRoutes)
 // app.use('/api/user', user)

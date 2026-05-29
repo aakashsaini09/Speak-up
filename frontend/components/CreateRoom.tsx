@@ -38,10 +38,11 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
     }
     console.log(roomData)
   }
-  const backendUrl = process.env.BCKEND_URL ?? "";
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+  console.log("Backend url: ", backendUrl)
   const { user } = useUser()
     console.log("useUser data: ", user)
-
+    
  const createRoomFunction = async () => {
   if(roomData.title.length <=5){
     toast("Title is too short!!")
@@ -52,17 +53,14 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
   }
   try {
     const token = await getToken();
-
-    const res = await axios.post(
-      `${backendUrl}/api/room`,
-      roomData,
+    const res = await axios.post(`${backendUrl}/api/room/create`, roomData,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }
     );
-
+    console.log("response is: ", res)
     if (res.data?.success) {
       toast.success("Room created successfully!");
     } else {

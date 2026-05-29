@@ -15,12 +15,10 @@ const userSchema =  mongoose.Schema({
       type: String,
       required: true,
     },
-    creatorId: ObjectId,
     firstName: String,
     lastName: String,
     imageUrl: String,
   
 },{timestamps: true})
-
 export default mongoose.model("User", userSchema)
 // module.exports = mongoose.model('User', userSchema)
