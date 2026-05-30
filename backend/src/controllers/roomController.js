@@ -21,15 +21,6 @@ export const createRoom = async (req, res) => {
         message: "Title and language are required",
       });
     }
-//     const firstUser = await User.findOne();
-
-// console.log("DB clerkId:", firstUser?.clerkId);
-// console.log("Token clerkId:", clerkId);
-// console.log(
-//   "Equal?",
-//   firstUser?.clerkId === clerkId
-// );
-    // Find user from database
     const user = await User.findOne({ 
       clerkId: String(clerkId),
      });
@@ -57,6 +48,8 @@ export const createRoom = async (req, res) => {
       title: title.trim(),
       language: language.trim(),
       creatorId: user._id,
+      creatorImg: user.imageUrl,
+      creatorName: user.firstName, 
       activeParticipants: 0,
       lastActiveAt: new Date(),
     });

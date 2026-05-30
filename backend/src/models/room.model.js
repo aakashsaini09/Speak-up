@@ -23,7 +23,9 @@ const roomSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
+    creatorImg: {
+      type: String
+    },
     lastActiveAt: {
       type: Date,
       default: Date.now,

@@ -2,17 +2,11 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
+import RoomCard from './RoomCard';
 
 const HomePage = () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
-    const [rooms, setRooms] = useState([{
-        activeParticipants: "",
-        createdAt: "",
-        creatorId:"",
-        language:"",
-        lastActiveAt:"",
-        _id:"",
-    }])
+    const [rooms, setRooms] = useState<any[]>([])
     useEffect(() => {
         fetchRoomFunction()
     }, [])
@@ -45,10 +39,11 @@ const HomePage = () => {
     }
     return (
         <>
-        <div className='text-white'>
-            {rooms.map((room) => {
-                <div></div>
-            })}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-zinc-950 h-screen px-32 py-12">
+            {rooms && rooms.map((room, idx) => (
+                // <div key={idx}>{typeof room === 'object' ? JSON.stringify(room) : String(room)}</div>
+                <div key={idx}><RoomCard room={room}/></div>
+            ))}
         </div>
         </>
     )
