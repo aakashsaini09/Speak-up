@@ -1,3 +1,4 @@
+import HomePage from "@/components/HomePage";
 import Navbar from "@/components/Navbar";
 
 export default function Home() {
@@ -5,6 +6,7 @@ export default function Home() {
     <div className="">
       <div>
         <Navbar/>
+        <HomePage/>
       </div>
     </div>
   );

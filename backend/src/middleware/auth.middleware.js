@@ -18,6 +18,7 @@ export const protect = async (req, res, next
           process.env.CLERK_SECRET_KEY,
       }
     );
+    // console.log("payload: ", payload)
     req.user = {
       clerkId: payload.sub,
     };

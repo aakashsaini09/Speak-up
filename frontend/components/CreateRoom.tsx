@@ -36,13 +36,8 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
     } else {
       setRoomData((prev) => ({ ...prev, language: e.target.value }))
     }
-    console.log(roomData)
   }
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
-  console.log("Backend url: ", backendUrl)
-  const { user } = useUser()
-    console.log("useUser data: ", user)
-    
  const createRoomFunction = async () => {
   if(roomData.title.length <=5){
     toast("Title is too short!!")
@@ -66,16 +61,22 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
     } else {
       toast.error("Something went wrong");
     }
-  } catch (error) {
-    console.log("Error while creating room:", error);
-
-    toast.error(
-      error instanceof Error
-        ? error.message
-        : "An error occurred"
+} catch (error) {
+  if (axios.isAxiosError(error)) {
+    console.log(
+      "Response Data:",
+      error.response?.data
     );
+    console.log("Full Response:", error.response);
+    toast.error(
+      error.response?.data?.message ||
+      "Request failed"
+    );
+  } else {
+    console.log(error);
+    toast.error("Unknown error");
   }
-};
+}}
   return (
     <>
       <Dialog open={popup} onOpenChange={setPopup}>

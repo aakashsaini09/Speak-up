@@ -2,11 +2,10 @@ import Room from "../models/room.model.js";
 import User from "../models/userModel.js";
 
 export const createRoom = async (req, res) => {
-  console.log("reached roomController")
   try {
     const { title, language } = req.body;
     const clerkId = req.user?.clerkId;
-    console.log(title, language, clerkId)
+    // console.log("req: ", req.user)
     // Validate auth
     if (!clerkId) {
       return res.status(401).json({
@@ -22,10 +21,19 @@ export const createRoom = async (req, res) => {
         message: "Title and language are required",
       });
     }
+//     const firstUser = await User.findOne();
 
+// console.log("DB clerkId:", firstUser?.clerkId);
+// console.log("Token clerkId:", clerkId);
+// console.log(
+//   "Equal?",
+//   firstUser?.clerkId === clerkId
+// );
     // Find user from database
-    const user = await User.findOne({ clerkId });
-
+    const user = await User.findOne({ 
+      clerkId: String(clerkId),
+     });
+    console.log("user: ", user)
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -68,7 +76,19 @@ export const createRoom = async (req, res) => {
   }
 };
 export const getAllrooms = async (req, res) => {
-    const response = await authentication(req)
-
-    res.json(room)
+    // Create room
+    try{
+    const rooms = await Room.find();
+    return res.status(201).json({
+      success: true,
+      message: "Room fetched",
+      rooms,
+    });
+  } catch (error) {
+    console.error("Error while fetching Rooms:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch rooms",
+    });
+  }
 }
