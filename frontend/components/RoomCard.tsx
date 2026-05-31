@@ -75,7 +75,7 @@ export default function RoomCard({ room }: RoomProps) {
 
             {/* Footer */}
             <div className="flex justify-center">
-                <button onClick={() => router.push('/room')} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition cursor-pointer">
+                <button onClick={() => router.push(`/room/:${room._id}`)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition cursor-pointer">
                     Join Room
                 </button>
             </div>
