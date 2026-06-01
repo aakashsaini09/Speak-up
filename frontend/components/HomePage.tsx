@@ -3,6 +3,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import RoomCard from './RoomCard';
+import Navbar from './Navbar';
 
 const HomePage = () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
@@ -38,14 +39,15 @@ const HomePage = () => {
         }
     }
     return (
-        <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-zinc-950 h-screen px-32 py-12">
-            {rooms && rooms.map((room, idx) => (
-                // <div key={idx}>{typeof room === 'object' ? JSON.stringify(room) : String(room)}</div>
-                <div key={idx}><RoomCard room={room}/></div>
-            ))}
+        <div>
+            <Navbar/>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-zinc-950 h-screen px-32 py-12">
+                    {rooms && rooms.map((room, idx) => (
+                        // <div key={idx}>{typeof room === 'object' ? JSON.stringify(room) : String(room)}</div>
+                        <div key={idx}><RoomCard room={room}/></div>
+                    ))}
+                </div>
         </div>
-        </>
     )
 }
 

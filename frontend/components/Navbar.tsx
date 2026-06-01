@@ -5,20 +5,12 @@ import CreateRoomPopup from './CreateRoom'
 import { useState } from 'react';
 const Navbar = () => {
     const [popup, setpopup] = useState(false);
-    const [userData, setUserData] = useState({
-        email: "" as string | undefined,
-        id: "",
-        firstName: "" as string | undefined,
-        fullName: "" as string | undefined,
-        imageUrl: "",
-
-    })
     function changePopup(){
         setpopup(pre => !pre)
     }
     return (
         <>
-            <div className='bg-black'>
+            <div className='bg-black py-5'>
                 <Show when="signed-out">
                     <SignInButton />
                     <SignUpButton>
@@ -28,7 +20,7 @@ const Navbar = () => {
                     </SignUpButton>
                 </Show>
                 <Show when="signed-in">
-                    <div className='w-full border-b-2 border-white flex justify-around'>
+                    <div className='w-full border-b-2 border-white flex justify-around py-5'>
                         <button className='bg-gray-600 py-2 px-3 cursor-pointer rounded-sm' onClick={changePopup}>Create room</button>
                         {popup ? (<CreateRoomPopup popup={popup} setPopup={setpopup}/>): (<></>)}
                         <UserButton />

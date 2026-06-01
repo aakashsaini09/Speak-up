@@ -30,13 +30,12 @@ export const initializeSocket = (server) => {
     imageUrl,
   });
   const participants = Array.from(activeRooms.get(roomId).participants.values());
-  console.log("particip: ", participants)
+  console.log("participants: ", participants)
   const count = activeRooms.get(roomId).participants.size;
   io.to(roomId).emit("participants-count",  count);
   io.to(roomId).emit("participants-update",  participants);
   io.to(roomId).emit("room-message", `User ${socket.id} joined`);
   });
-
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
   });
