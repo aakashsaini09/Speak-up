@@ -83,10 +83,9 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
         <form action="">
           <DialogContent className="sm:max-w-sm">
             <DialogHeader>
-              <DialogTitle>Edit profile</DialogTitle>
+              <DialogTitle className="font-bold">Create your own room</DialogTitle>
               <DialogDescription>
-                Make changes to your profile here. Click save when you&apos;re
-                done.
+                Gave a relevent title so users enter accordingly
               </DialogDescription>
             </DialogHeader>
             <FieldGroup>

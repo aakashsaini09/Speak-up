@@ -16,13 +16,11 @@ type ParticipantProps = {
   participant: Participant;
 };
 export default function Page() {
-  
-  "use client";
-  
     const {user} = useUser();
     const { id } = useParams();
     // console.log("Id: ", id)
     const [participants, setParticipants] = useState<Participant[]>([]);
+    const [userCount, setUserCount] = useState(0);
     useEffect(() => {
       console.log(
         "Updated participants:",
@@ -36,16 +34,17 @@ export default function Page() {
       roomId: id,
       userId: user?.id,
       name: user?.firstName,
-      imageUrl: user?.imageUrl,
+      imageUrl: user?.imageUrl
     };
     socket.on("participants-count", (count) => {
       console.log("Number of participats: ", count);
+      setUserCount(count)
     });
     socket.on("participants-update", (data) => {
-      console.log("Data: ", data)
+      // console.log("Data: ", data)
       setParticipants(data)
     } )
-    console.log("participants: ", participants)
+    // console.log("participants: ", participants)
     socket.on("room-message", (message) => {
       console.log(message);
     });
@@ -113,8 +112,8 @@ export default function Page() {
               English Practice Room
             </h1>
 
-            <p className="text-zinc-400 mt-2">
-              12 Participants Online
+            <p className="text-zinc-400 mt-2 font-extrabold">
+              {userCount <= 1 ? `${userCount} Participant Online` : `${userCount} Participants Online`}
             </p>
 
             <span className="inline-block mt-4 px-3 py-1 bg-indigo-600 rounded-full text-sm">
@@ -125,7 +124,7 @@ export default function Page() {
 
         {/* Participants */}
         <div className="border-t border-zinc-800 p-4">
-          <div className="flex gap-4 overflow-x-auto">
+          <div className="flex gap-4 overflow-x-auto justify-center">
             {participants.map((user) => (
               <ParticipantCard
                 key={user?.userId}

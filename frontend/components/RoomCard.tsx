@@ -1,6 +1,6 @@
 "use client"
 import { useRouter } from "next/navigation";
-
+import {User} from 'lucide-react'
 type RoomProps = {
     room: {
         _id: string;
@@ -34,7 +34,7 @@ export default function RoomCard({ room }: RoomProps) {
                       src={room.creatorImg}
                     // src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"
                     alt="creator"
-                    className="w-10 h-10 rounded-full object-cover border border-zinc-700"
+                    className="w-12 h-12 rounded-full object-cover border border-zinc-700"
                 />
 
                 <div className="min-w-0">
@@ -42,8 +42,8 @@ export default function RoomCard({ room }: RoomProps) {
                         {room.title}
                     </h3>
 
-                    <p className="text-sm text-blue-400">
-                        {room.language}
+                    <p className="text-sm text-blue-400 flex justify-between">
+                        <span>{room.language}</span> <span className="flex justify-center items-center text-xl"><User size={20}/> 0</span>
                     </p>
                 </div>
             </div>
@@ -52,7 +52,11 @@ export default function RoomCard({ room }: RoomProps) {
             <div className="h-22.5 flex items-center justify-center">
 
                 {participants.length === 0 ? (
-                    <div className="h-18" />
+                    <div className="flex gap-3">
+                    <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
+                    <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
+                    <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
+                    </div>
                 ) : (
                     <div
                         className={`grid ${participants.length > 3

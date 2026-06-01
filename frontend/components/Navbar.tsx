@@ -21,7 +21,7 @@ const Navbar = () => {
                 </Show>
                 <Show when="signed-in">
                     <div className='w-full border-b-2 border-white flex justify-around py-5'>
-                        <button className='bg-gray-600 py-2 px-3 cursor-pointer rounded-sm' onClick={changePopup}>Create room</button>
+                        <button className='bg-white py-2 px-3 cursor-pointer rounded-sm' onClick={changePopup}>Create room</button>
                         {popup ? (<CreateRoomPopup popup={popup} setPopup={setpopup}/>): (<></>)}
                         <UserButton />
                         {/* <UserProfile/> */}
