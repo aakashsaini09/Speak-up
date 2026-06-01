@@ -9,12 +9,32 @@ export const initializeSocket = (server) => {
     },
   });
   io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-  socket.on("join-room", ({ roomId }) => {
-  console.log(`${socket.id} joined room ${roomId}`);
+  // console.log("User connected:", socket.id);
+  socket.on("join-room", (data) => {
+    const {roomId, userId, name, imageUrl} = data;
+    socket.join(roomId)
+    console.log(`${socket.id} joined room ${roomId}`);
 
-  
-    io.to(roomId).emit("room-message", `User ${socket.id} joined` );
+  if (!activeRooms.has(roomId)) {
+  activeRooms.set(roomId, {
+    participants: new Map(),
+  });
+  }
+  activeRooms
+  .get(roomId)
+  .participants
+  .set(userId, {
+    userId,
+    socketId: socket.id,
+    name,
+    imageUrl,
+  });
+  const participants = Array.from(activeRooms.get(roomId).participants.values());
+  console.log("particip: ", participants)
+  const count = activeRooms.get(roomId).participants.size;
+  io.to(roomId).emit("participants-count",  count);
+  io.to(roomId).emit("participants-update",  participants);
+  io.to(roomId).emit("room-message", `User ${socket.id} joined`);
   });
 
   socket.on("disconnect", () => {
