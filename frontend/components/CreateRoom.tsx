@@ -26,25 +26,33 @@ import { toast, Toaster } from "sonner"
 import { getToken, useUser } from "@clerk/nextjs"
 interface roomTypes {
   title: string,
-  language: string
+  language: string,
+  maxUser: number
 }
 const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open: boolean) => void }) => {
-  const [roomData, setRoomData] = useState<roomTypes>({ title: "", language: "English" })
+  const [roomData, setRoomData] = useState<roomTypes>({ title: "", language: "English", maxUser: 3 })
   function setDataFunction(e: React.ChangeEvent<HTMLInputElement>, value: string) {
     if (value === "title") {
       setRoomData((prev) => ({ ...prev, title: e.target.value }))
-    } else {
-      setRoomData((prev) => ({ ...prev, language: e.target.value }))
+    } else if(value === "maxUser") {
+      const parsed = parseInt(e.target.value, 10)
+      setRoomData((prev) => ({ ...prev, maxUser: Number.isNaN(parsed) ? 3 : parsed }))
+    }else{
+      setRoomData((prev) => ({ ...prev, language: e.target.value}))
     }
   }
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
  const createRoomFunction = async () => {
+  console.log("roomdata: ", roomData)
   if(roomData.title.length <=5){
     toast("Title is too short!!")
     return;
   }
   if(!roomData.language){
     setRoomData((prev) => ({ ...prev, language: 'English'}))
+  }
+  if(roomData.maxUser <= 0){
+    setRoomData((prev) => ({ ...prev, maxUser: 3}))
   }
   try {
     const token = await getToken();
@@ -94,6 +102,10 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
                 <Input value={roomData?.title} onChange={(e) => setDataFunction(e, "title")} id="title" name="title" placeholder="English speaking practice room" />
               </Field>
               <Field>
+              <Field>
+                <Label htmlFor="maxUser">Maxuser</Label>
+                <Input type="number" value={roomData?.maxUser} onChange={(e) => setDataFunction(e, "maxUser")} id="maxUser" name="maxUser" placeholder="Number of User can Join" />
+              </Field>
                 <Label htmlFor="language">Language</Label>
 
                 <Select

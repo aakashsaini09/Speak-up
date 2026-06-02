@@ -36,21 +36,25 @@ export default function Page() {
       name: user?.firstName,
       imageUrl: user?.imageUrl
     };
+    socket.on("message", (msg) => {
+      console.log("message: ", msg)
+    });
     socket.on("participants-count", (count) => {
       console.log("Number of participats: ", count);
       setUserCount(count)
     });
     socket.on("participants-update", (data) => {
-      // console.log("Data: ", data)
       setParticipants(data)
     } )
-    // console.log("participants: ", participants)
     socket.on("room-message", (message) => {
       console.log(message);
     });
+    let sendMsg = "This is Message"
+    socket.emit("message", sendMsg)
     socket.emit("join-room", userAndRoomData);
     return () => {
       socket.off("room-message");
+      socket.off("message");
       socket.off("participants-count");
       socket.off("participants-update");
     };

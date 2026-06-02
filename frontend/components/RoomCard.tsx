@@ -6,8 +6,10 @@ type RoomProps = {
         _id: string;
         title: string;
         language: string;
+        activeParticipants: number;
+        maxUser: number;
         creatorImg: string;
-        activeParticipants: {
+        participantsList: {
             id: string;
             image: string;
         }[];
@@ -15,10 +17,10 @@ type RoomProps = {
 };
 export default function RoomCard({ room }: RoomProps) {
     const router = useRouter()
-    const joinRoom = (roomId: string) =>{
-        console.log(roomId)
-    }
-    const participants = room.activeParticipants || [];
+    // const joinRoom = (roomId: string) =>{
+    //     console.log(roomId)
+    // }
+    const participants = room.participantsList || [];
 
     const avatarSize =
         participants.length > 3
@@ -43,7 +45,7 @@ export default function RoomCard({ room }: RoomProps) {
                     </h3>
 
                     <p className="text-sm text-blue-400 flex justify-between">
-                        <span>{room.language}</span> <span className="flex justify-center items-center text-xl"><User size={20}/> 0</span>
+                        <span>{room.language}</span> <span className="flex justify-center items-center text-xl"><User size={20}/> {room.activeParticipants}/{room.maxUser}</span>
                     </p>
                 </div>
             </div>

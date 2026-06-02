@@ -1,7 +1,9 @@
 import { Server } from "socket.io";
 import { activeRooms } from "./activeRooms.js";
+import Room from "../models/room.model.js";
+import { updateUserCount } from "./updateInDB.js";
 let io;
-export const initializeSocket = (server) => {
+export const initializeSocket = async (server) => {
   io = new Server(server, {
     cors: {
       origin: "http://localhost:3000",
@@ -30,9 +32,12 @@ export const initializeSocket = (server) => {
     imageUrl,
   });
   const participants = Array.from(activeRooms.get(roomId).participants.values());
-  console.log("participants: ", participants)
+  // console.log("participants: ", participants)
   const count = activeRooms.get(roomId).participants.size;
-  io.to(roomId).emit("participants-count",  count);
+  // await Room.findById(roomId)
+  updateUserCount(count, roomId)
+  io.to(roomId).emit("participants-count", count);
+  io.to(roomId).emit("message",  msg => msg);
   io.to(roomId).emit("participants-update",  participants);
   io.to(roomId).emit("room-message", `User ${socket.id} joined`);
   });

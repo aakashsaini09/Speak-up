@@ -12,7 +12,10 @@ const roomSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
+    maxUser: {
+      type: Number,
+      required: true
+    },
     creatorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

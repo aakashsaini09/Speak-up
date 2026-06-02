@@ -3,7 +3,8 @@ import User from "../models/userModel.js";
 
 export const createRoom = async (req, res) => {
   try {
-    const { title, language } = req.body;
+    const { title, language, maxUser } = req.body;
+    // console.log("req.body: ", req.body)
     const clerkId = req.user?.clerkId;
     // console.log("req: ", req.user)
     // Validate auth
@@ -24,7 +25,7 @@ export const createRoom = async (req, res) => {
     const user = await User.findOne({ 
       clerkId: String(clerkId),
      });
-    console.log("user: ", user)
+    // console.log("user: ", user)
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -43,17 +44,19 @@ export const createRoom = async (req, res) => {
         message: "Maximum 2 active rooms allowed. Delete previous rooms first.",
       });
     }
+    // console.log("maxUser is: ", maxUser)
     // Create room
     const room = await Room.create({
       title: title.trim(),
       language: language.trim(),
+      maxUser: maxUser,
       creatorId: user._id,
       creatorImg: user.imageUrl,
       creatorName: user.firstName, 
       activeParticipants: 0,
       lastActiveAt: new Date(),
     });
-
+    // console.log("Room created: ", room)
     return res.status(201).json({
       success: true,
       message: "Room created successfully",
