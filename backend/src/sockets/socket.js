@@ -11,11 +11,12 @@ export const initializeSocket = async (server) => {
     },
   });
   io.on("connection", (socket) => {
-  // console.log("User connected:", socket.id);
   socket.on("join-room", (data) => {
     const {roomId, userId, name, imageUrl} = data;
+    socket.roomId = roomId;
+    socket.userId = userId;
     socket.join(roomId)
-    console.log(`${socket.id} joined room ${roomId}`);
+    console.log("RoomId: ", roomId, "userId: ", userId);
 
   if (!activeRooms.has(roomId)) {
   activeRooms.set(roomId, {
@@ -32,18 +33,68 @@ export const initializeSocket = async (server) => {
     imageUrl,
   });
   const participants = Array.from(activeRooms.get(roomId).participants.values());
-  // console.log("participants: ", participants)
   const count = activeRooms.get(roomId).participants.size;
-  // await Room.findById(roomId)
   updateUserCount(count, roomId)
   io.to(roomId).emit("participants-count", count);
-  io.to(roomId).emit("message",  msg => msg);
   io.to(roomId).emit("participants-update",  participants);
   io.to(roomId).emit("room-message", `User ${socket.id} joined`);
+  console.log( "participants map:",  activeRooms.get(roomId).participants);
+  console.log( "participants array:",  participants);
+  console.log( "count:", count);
   });
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+  socket.on("message", msg => {
+    // const roomId = socket.roomId;
+    const userId = socket.userId;
+      io.to(roomId).emit( "message", msg
+    );
   });
+  socket.on("leave-room", async () => {
+  const roomId = socket.roomId;
+  const userId = socket.userId;
+  if ( roomId && activeRooms.has(roomId)) {
+    activeRooms.get(roomId).participants.delete(userId);
+    const participants = Array.from(activeRooms.get(roomId).participants.values());
+    const count = participants.length;
+    await updateUserCount(count, roomId );
+    if ( activeRooms.get(roomId).participants.size === 0) {
+      activeRooms.delete(roomId); 
+    }
+    io.to(roomId).emit( "participants-count", count);
+    io.to(roomId).emit("participants-update",  participants );
+    socket.leave(roomId);
+  }
+});
+  socket.on("disconnect", async () => {
+  const roomId = socket.roomId;
+  const userId = socket.userId;
+  if (roomId && activeRooms.has(roomId)) {
+    activeRooms
+      .get(roomId)
+      .participants
+      .delete(userId);
+    const count =
+      activeRooms.get(roomId).participants.size;
+      if ( activeRooms.get(roomId).participants.size === 0) {
+        activeRooms.delete(roomId);
+      }
+    await updateUserCount(count, roomId);
+    const participants =
+      Array.from(
+        activeRooms
+          .get(roomId)
+          .participants
+          .values()
+      );
+    io.to(roomId).emit(
+      "participants-count",
+      count
+    );
+    io.to(roomId).emit(
+      "participants-update",
+      participants
+    );
+  }
+});
 });
   return io;
 };

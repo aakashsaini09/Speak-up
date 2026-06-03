@@ -18,7 +18,6 @@ type ParticipantProps = {
 export default function Page() {
     const {user} = useUser();
     const { id } = useParams();
-    // console.log("Id: ", id)
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [userCount, setUserCount] = useState(0);
     useEffect(() => {
@@ -36,28 +35,33 @@ export default function Page() {
       name: user?.firstName,
       imageUrl: user?.imageUrl
     };
+    const handleCount = (count: number) => {
+      setUserCount(count);
+    };
+
+    const handleParticipants = (data: Participant[]) => {
+      setParticipants(data);
+    };
+    console.log("JOINING");
+    socket.emit("join-room", userAndRoomData);
     socket.on("message", (msg) => {
       console.log("message: ", msg)
     });
     socket.on("participants-count", (count) => {
-      console.log("Number of participats: ", count);
-      setUserCount(count)
+      // console.log("Number of participats: ", count);
+      // setUserCount(count)
+      handleCount(count)
     });
-    socket.on("participants-update", (data) => {
-      setParticipants(data)
-    } )
+    socket.on("participants-update", handleParticipants )
     socket.on("room-message", (message) => {
       console.log(message);
     });
-    let sendMsg = "This is Message"
-    socket.emit("message", sendMsg)
-    socket.emit("join-room", userAndRoomData);
-    return () => {
-      socket.off("room-message");
-      socket.off("message");
-      socket.off("participants-count");
-      socket.off("participants-update");
-    };
+  return () => {
+    socket.off("room-message");
+    socket.off("message");
+    socket.off("participants-count", handleCount);
+    socket.off( "participants-update", handleParticipants);
+};
   }, [id, user?.id]);
 
   const [micEnabled, setMicEnabled] = useState(false);
