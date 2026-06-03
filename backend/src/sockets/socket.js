@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { activeRooms } from "./activeRooms.js";
+import { activeRooms, worldChatUsers } from "./activeRooms.js";
 import Room from "../models/room.model.js";
 import { updateUserCount } from "./updateInDB.js";
 let io;
@@ -42,6 +42,11 @@ export const initializeSocket = async (server) => {
   console.log( "participants array:",  participants);
   console.log( "count:", count);
   });
+  socket.on("world-chat-join", user => {
+    worldChatUsers.set(user.userId, user);
+    io.emit("world-chat-count", worldChatUsers.size);
+  }
+);
   socket.on("message", msg => {
     // const roomId = socket.roomId;
     const userId = socket.userId;
