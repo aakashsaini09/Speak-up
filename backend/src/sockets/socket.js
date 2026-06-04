@@ -42,6 +42,9 @@ export const initializeSocket = async (server) => {
   // console.log( "participants array:",  participants);
   // console.log( "count:", count);
   });
+  socket.on("room-message", (data)=> {
+    io.emit("room-message", data)
+  })
   socket.on("world-chat-join", user => {
     worldChatUsers.set(user.userId, user);
     // console.log("User joined: ", worldChatUsers)

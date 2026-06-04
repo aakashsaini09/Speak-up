@@ -44,17 +44,12 @@ export default function Page() {
     };
     console.log("JOINING");
     socket.emit("join-room", userAndRoomData);
-    socket.on("message", (msg) => {
-      console.log("message: ", msg)
-    });
     socket.on("participants-count", (count) => {
-      // console.log("Number of participats: ", count);
-      // setUserCount(count)
       handleCount(count)
     });
     socket.on("participants-update", handleParticipants )
-    socket.on("room-message", (message) => {
-      console.log(message);
+    socket.on("room-message", (data) => {
+      console.log(data);
     });
   return () => {
     socket.off("room-message");
