@@ -3,9 +3,12 @@
 import { socket } from "@/lib/socket";
 import { useUser } from "@clerk/nextjs";
 import { Send, Globe } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function WorldChat() {
+  const inputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef(null);
   const [message, setMessage] = useState("");
   const [onlineCount, setOnlineCount] = useState(112);
   const [messages, setMessages] = useState([
@@ -27,6 +30,10 @@ export default function WorldChat() {
     },
   ])
     const {user} = useUser();
+      useEffect(() => {
+    // Scroll to the bottom element whenever messages change
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
   // const messages = [
   //   {
   //     id: 1,
@@ -46,25 +53,23 @@ export default function WorldChat() {
   //   },
   // ];
  useEffect(() => {
-  // socket.emit(
-  //   "world-chat-join",
-  //   {
-  //     userId: user?.id,
-  //     name: user?.firstName,
-  //     imageUrl: user?.imageUrl,
-  //   }
-  // );
-  socket.on(
-    "world-chat-count",
-    count => {
+  socket.emit("world-chat-join",
+    {
+      userId: user?.id,
+      name: user?.firstName,
+      imageUrl: user?.imageUrl,
+    }
+  );
+  socket.on("world-chat-count", count => {
+    console.log("count is: ", count)
       setOnlineCount(count);
     }
   );
   socket.on( "world-chat-message",
     data => {
-      console.log(data);
+      console.log("data: ", data);
       const newMsg = {
-        id: data?.userId,
+        id: data?.id,
         name: data?.firstName || "Anonymous",
         image: data?.imageUrl || "https://i.pravatar.cc/100?img=3",
         text: data.message,
@@ -85,28 +90,38 @@ export default function WorldChat() {
     );
   };
 }, []);
-function sendMessage(){
-  const data = {
-    message,
+
+  function sendMessage(){
+    // const newMsg = {
+    //   id: Date.now(),
+    //   name: user?.firstName || "Anonymous",
+    //   image: user?.imageUrl || "https://i.pravatar.cc/100?img=3",
+    //   text: message,
+    //   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    // };
+
+    // setMessages(prev => [...prev, newMsg]);
+  const trimmedMessage = message.trim();
+  if (!trimmedMessage) return;
+
+  socket.emit("world-chat-message", {
+    message: trimmedMessage,
     id: user?.id,
     imageUrl: user?.imageUrl,
     firstName: user?.firstName,
-  };
-  // const newMsg = {
-  //   id: Date.now(),
-  //   name: user?.firstName || "Anonymous",
-  //   image: user?.imageUrl || "https://i.pravatar.cc/100?img=3",
-  //   text: message,
-  //   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  });
+
+  setMessage("");
+
+  inputRef.current?.focus();
+  }
+  // const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  //   if (e.key === "Enter") {
+  //     e.preventDefault(); 
+  //     sendMessage();
+  //   }
   // };
 
-  // setMessages(prev => [...prev, newMsg]);
-  setMessage("");
-  socket.emit(
-    "world-chat-message",
-    data
-  );
-}
   return (
     <div className="h-[85vh] bg-zinc-950 text-white flex justify-center p-4 pt-0">
       <div className="w-full max-w-5xl bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
@@ -129,36 +144,69 @@ function sendMessage(){
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto scrollbar scrollbar-thumb-indigo-600 scrollbar-track-transparent p-6 space-y-4">
 
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className="flex gap-3"
-            >
-              <img
-                src={msg.image}
-                alt=""
-                className="w-10 h-10 rounded-full object-cover"
-              />
+          {messages.map((msg, index) => {
+  const isOwnMessage = String(msg.id) == user?.id;
+  return (
+    <div key={index}
+      className={`flex ${
+        isOwnMessage
+          ? "justify-end"
+          : "justify-start"
+      }`}
+    >
+      <div
+        className={`flex gap-3 max-w-[75%] ${
+          isOwnMessage
+            ? "flex-row-reverse"
+            : ""
+        }`}
+      >
+        <img
+          src={msg.image}
+          alt=""
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        />
 
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">
-                    {msg.name}
-                  </span>
+        <div
+          className={`${
+            isOwnMessage
+              ? "text-right"
+              : ""
+          }`}
+        >
+          <div
+            className={`flex items-center gap-2 ${
+              isOwnMessage
+                ? "justify-end"
+                : ""
+            }`}
+          >
+            <span className="font-medium">
+              {msg.name}
+            </span>
 
-                  <span className="text-xs text-zinc-500">
-                    {msg.time}
-                  </span>
-                </div>
+            <span className="text-xs text-zinc-500">
+              {msg.time}
+            </span>
+          </div>
 
-                <div className="bg-zinc-800 mt-1 px-4 py-2 rounded-2xl inline-block">
-                  {msg.text}
-                </div>
-              </div>
-            </div>
-          ))}
+          <div
+            className={`mt-1 px-4 py-2 rounded-2xl inline-block break-words ${
+              isOwnMessage
+                ? "bg-indigo-600 text-white"
+                : "bg-zinc-800"
+            }`}
+          >
+            {msg.text}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+})}
+<div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
@@ -166,14 +214,19 @@ function sendMessage(){
           <div className="flex gap-3">
             <input
               value={message}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && message.trim()) {
+                  sendMessage();
+                }
+              }}
               onChange={(e) =>
-                setMessage(e.target.value)
+              setMessage(e.target.value)
               }
               placeholder="Say hello to the world..."
               className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
 
-            <button onClick={sendMessage} className="bg-indigo-600 hover:bg-indigo-500 px-5 rounded-xl transition">
+            <button ref={buttonRef} onClick={sendMessage} className="bg-indigo-600 hover:bg-indigo-500 px-5 rounded-xl transition">
               <Send size={20} />
             </button>
           </div>

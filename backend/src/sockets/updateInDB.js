@@ -1,6 +1,6 @@
 import Room from "../models/room.model.js";
 export const updateUserCount = async (count, roomId) => {
-    console.log("reached here: ", count)
+    // console.log("reached here: ", count)
   try {
     await Room.findByIdAndUpdate( roomId, {
     activeParticipants: count

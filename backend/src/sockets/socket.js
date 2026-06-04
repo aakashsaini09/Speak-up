@@ -38,17 +38,18 @@ export const initializeSocket = async (server) => {
   io.to(roomId).emit("participants-count", count);
   io.to(roomId).emit("participants-update",  participants);
   io.to(roomId).emit("room-message", `User ${socket.id} joined`);
-  console.log( "participants map:",  activeRooms.get(roomId).participants);
-  console.log( "participants array:",  participants);
-  console.log( "count:", count);
+  // console.log( "participants map:",  activeRooms.get(roomId).participants);
+  // console.log( "participants array:",  participants);
+  // console.log( "count:", count);
   });
   socket.on("world-chat-join", user => {
     worldChatUsers.set(user.userId, user);
+    // console.log("User joined: ", worldChatUsers)
     io.emit("world-chat-count", worldChatUsers.size);
   }
 );
   socket.on("world-chat-message", data => {
-    console.log("Data in server side: ", data)
+    // console.log("Data in server side: ", data)
     io.emit("world-chat-message", data)
   });
   socket.on("leave-room", async () => {
