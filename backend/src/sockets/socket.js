@@ -47,11 +47,9 @@ export const initializeSocket = async (server) => {
     io.emit("world-chat-count", worldChatUsers.size);
   }
 );
-  socket.on("message", msg => {
-    // const roomId = socket.roomId;
-    const userId = socket.userId;
-      io.to(roomId).emit( "message", msg
-    );
+  socket.on("world-chat-message", data => {
+    console.log("Data in server side: ", data)
+    io.emit("world-chat-message", data)
   });
   socket.on("leave-room", async () => {
   const roomId = socket.roomId;

@@ -8,40 +8,105 @@ import { useEffect, useState } from "react";
 export default function WorldChat() {
   const [message, setMessage] = useState("");
   const [onlineCount, setOnlineCount] = useState(112);
+  const [messages, setMessages] = useState([
+       {
+        id: 1,
+        name: "Aakash",
+        image:
+          "https://i.pravatar.cc/100?img=1",
+        text: "Hello everyone 👋",
+        time: "10:22",
+      },
+      {
+        id: 2,
+        name: "John",
+        image:
+          "https://i.pravatar.cc/100?img=2",
+        text: "Anyone learning English?",
+        time: "10:23",
+    },
+  ])
     const {user} = useUser();
-  const messages = [
-    {
-      id: 1,
-      name: "Aakash",
-      image:
-        "https://i.pravatar.cc/100?img=1",
-      text: "Hello everyone 👋",
-      time: "10:22",
-    },
-    {
-      id: 2,
-      name: "John",
-      image:
-        "https://i.pravatar.cc/100?img=2",
-      text: "Anyone learning English?",
-      time: "10:23",
-    },
-  ];
-  useEffect(() => {
-  socket.emit("world-chat-join", {
-      userId: user?.id,
-      name: user?.firstName,
-      imageUrl: user?.imageUrl,
-    });
-  socket.on( "world-chat-count", count => {
+  // const messages = [
+  //   {
+  //     id: 1,
+  //     name: "Aakash",
+  //     image:
+  //       "https://i.pravatar.cc/100?img=1",
+  //     text: "Hello everyone 👋",
+  //     time: "10:22",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "John",
+  //     image:
+  //       "https://i.pravatar.cc/100?img=2",
+  //     text: "Anyone learning English?",
+  //     time: "10:23",
+  //   },
+  // ];
+ useEffect(() => {
+  // socket.emit(
+  //   "world-chat-join",
+  //   {
+  //     userId: user?.id,
+  //     name: user?.firstName,
+  //     imageUrl: user?.imageUrl,
+  //   }
+  // );
+  socket.on(
+    "world-chat-count",
+    count => {
       setOnlineCount(count);
-    });
-
+    }
+  );
+  socket.on( "world-chat-message",
+    data => {
+      console.log(data);
+      const newMsg = {
+        id: data?.userId,
+        name: data?.firstName || "Anonymous",
+        image: data?.imageUrl || "https://i.pravatar.cc/100?img=3",
+        text: data.message,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, newMsg])
+    }
+  );
   return () => {
-    socket.emit("world-chat-leave");
-    socket.off("world-chat-count");
+    socket.emit(
+      "world-chat-leave"
+    );
+    socket.off(
+      "world-chat-count"
+    );
+    socket.off(
+      "world-chat-message"
+    );
   };
 }, []);
+function sendMessage(){
+  const data = {
+    message,
+    id: user?.id,
+    imageUrl: user?.imageUrl,
+    firstName: user?.firstName,
+  };
+  // const newMsg = {
+  //   id: Date.now(),
+  //   name: user?.firstName || "Anonymous",
+  //   image: user?.imageUrl || "https://i.pravatar.cc/100?img=3",
+  //   text: message,
+  //   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  // };
+
+  // setMessages(prev => [...prev, newMsg]);
+  setMessage("");
+  socket.emit(
+    "world-chat-message",
+    data
+  );
+}
   return (
     <div className="h-[85vh] bg-zinc-950 text-white flex justify-center p-4 pt-0">
       <div className="w-full max-w-5xl bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
@@ -66,9 +131,9 @@ export default function WorldChat() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
-          {messages.map((msg) => (
+          {messages.map((msg, index) => (
             <div
-              key={msg.id}
+              key={index}
               className="flex gap-3"
             >
               <img
@@ -108,7 +173,7 @@ export default function WorldChat() {
               className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
 
-            <button className="bg-indigo-600 hover:bg-indigo-500 px-5 rounded-xl transition">
+            <button onClick={sendMessage} className="bg-indigo-600 hover:bg-indigo-500 px-5 rounded-xl transition">
               <Send size={20} />
             </button>
           </div>
