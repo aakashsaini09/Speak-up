@@ -92,15 +92,6 @@ export default function WorldChat() {
   }, []);
 
   function sendMessage() {
-    // const newMsg = {
-    //   id: Date.now(),
-    //   name: user?.firstName || "Anonymous",
-    //   image: user?.imageUrl || "https://i.pravatar.cc/100?img=3",
-    //   text: message,
-    //   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    // };
-
-    // setMessages(prev => [...prev, newMsg]);
     const trimmedMessage = message.trim();
     if (!trimmedMessage) return;
 
@@ -110,9 +101,7 @@ export default function WorldChat() {
       imageUrl: user?.imageUrl,
       firstName: user?.firstName,
     });
-
     setMessage("");
-
     inputRef.current?.focus();
   }
   // const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

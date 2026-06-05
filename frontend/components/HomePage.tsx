@@ -21,11 +21,11 @@ const HomePage = () => {
                     <WorldChat/>
                 )}
                     <div className='fixed w-full flex bottom-2 justify-around'>
-                <ToggleGroup variant="outline" type="single" value={value} onValueChange={(value) => { if (value) setValue(value) }} defaultValue="rooms">
-                    <ToggleGroupItem value="rooms" aria-label="Toggle all" className={`px-4 py-2 ${value == 'rooms' ? 'text-black hover:text-black hover:bg-black' : 'text-white hover:text-black'}`}>
+                <ToggleGroup variant="default" type="single" value={value} onValueChange={(value) => { if (value) setValue(value) }} defaultValue="rooms">
+                    <ToggleGroupItem value="rooms" aria-label="Toggle all" className={`px-4 py-2 `}>
                         Rooms
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="chat" aria-label="Toggle missed" className={`px-4 py-2 ${value == 'chat' ? 'text-black hover:text-black hover:bg-black' : 'text-white hover:text-black'}`}>
+                    <ToggleGroupItem value="chat" aria-label="Toggle missed" className={`px-4 py-2`}>
                         World-Chat
                     </ToggleGroupItem>
                 </ToggleGroup>

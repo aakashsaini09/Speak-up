@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
 import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, SquareArrowRightExit } from "lucide-react";
 import ChatPanel from "@/components/ChatPanel";
 import {useRouter} from "next/navigation";
+import PrivateRoomChat from "@/components/PrivateRoomChat";
 type Participant = {
   userId: string;
   name: string;
@@ -76,7 +77,7 @@ export default function Page() {
   return (
     <div className="h-screen bg-zinc-950 text-white flex">
       {/* Main Section */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col w-full">
 
         {/* Top Controls */}
         <div className="flex justify-center gap-4 p-4">
@@ -115,7 +116,7 @@ export default function Page() {
           </button>
 
           <button onClick={leaveRoom} className="p-3 rounded-xl bg-red-600 hover:bg-red-500 cursor-pointer">
-            <PhoneOff size={20} />
+            <SquareArrowRightExit size={20} />
           </button>
         </div>
 
@@ -150,7 +151,10 @@ export default function Page() {
       </div>
 
       {/* Chat */}
-      <ChatPanel />
+      {/* <ChatPanel /> */}
+      <div className="absolute top-4 right-4">
+        <PrivateRoomChat/>
+      </div>
     </div>
   );
 }

@@ -64,12 +64,7 @@ export default function ChatPanel() {
          {messages.map((msg, index) => {
             const isOwnMessage = String(msg.id) == user?.id;
             return (
-              <div key={index}
-                className={`flex ${isOwnMessage
-                    ? "justify-end"
-                    : "justify-start"
-                  }`}
-              >
+              <div key={index} className={`flex ${isOwnMessage ? "justify-end" : "justify-start" }`} >
                 <div className={`flex items-center gap-3 max-w-[75%] ${isOwnMessage ? "flex-row-reverse" : ""  }`}  >
                   <img src={msg.image} alt="" className="w-14 h-14 flex rounded-full object-cover shrink-0" />
                   <div className={`${isOwnMessage ? "text-right" : "" }`} >
@@ -77,35 +72,20 @@ export default function ChatPanel() {
                       <span className="font-medium">
                         {msg.name}
                       </span>
-
                       <span className="text-xs text-zinc-500">
                         {msg.time}
                       </span>
                     </div>
-
-                    <div
-                      className={`mt-1 px-4 py-2 rounded-2xl inline-block wrap-break-word ${isOwnMessage
-                          ? "bg-indigo-600 text-white text-left"
-                          : "bg-zinc-800"
-                        }`}
-                    >
+                    <div className={`mt-1 px-4 py-2 rounded-2xl inline-block wrap-break-word ${isOwnMessage ? "bg-indigo-600 text-white text-left" : "bg-zinc-800" }`}>
                       {msg.text}
                     </div>
                   </div>
                 </div>
               </div>
-            );
+            )
           })}
-          <div ref={messagesEndRef} />
-        {/* <div className="bg-zinc-800 p-2 rounded-lg">
-          Hello everyone 👋
-        </div>
-
-        <div className="bg-zinc-800 p-2 rounded-lg">
-          Welcome to the room
-        </div> */}
       </div>
-
+      <div ref={messagesEndRef} />
       {/* Input */}
       <div className="p-3 border-t border-zinc-800">
         <div className="flex gap-2">
