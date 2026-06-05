@@ -43,12 +43,25 @@ export const initializeSocket = async (server) => {
   // console.log( "count:", count);
   });
   socket.on("room-message", (data)=> {
-    io.emit("room-message", data)
+    console.log("data: ", data)
+    const roomId = socket.roomId;
+    console.log("roomId: ", roomId)
+    io.to(roomId).emit("room-message", data)
   })
-  socket.on("world-chat-join", user => {
-    worldChatUsers.set(user.userId, user);
-    // console.log("User joined: ", worldChatUsers)
+  socket.on( "world-chat-join", user => {
+    socket.userId =
+    user.userId;
+    worldChatUsers.set( user.userId, user);
     io.emit("world-chat-count", worldChatUsers.size);
+  }
+);
+socket.on("world-chat-leave", () => {
+    const userId = socket.userId;
+    if (userId && worldChatUsers.has(userId)) {
+      worldChatUsers.delete( userId);
+      io.emit("world-chat-count",
+        worldChatUsers.size);
+    }
   }
 );
   socket.on("world-chat-message", data => {
@@ -81,9 +94,9 @@ export const initializeSocket = async (server) => {
       .delete(userId);
     const count =
       activeRooms.get(roomId).participants.size;
-      if ( activeRooms.get(roomId).participants.size === 0) {
-        activeRooms.delete(roomId);
-      }
+      // if ( activeRooms.get(roomId).participants.size === 0) {
+      //   activeRooms.delete(roomId);
+      // }
     await updateUserCount(count, roomId);
     const participants =
       Array.from(

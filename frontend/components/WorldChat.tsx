@@ -80,7 +80,7 @@ export default function WorldChat() {
     );
     return () => {
       socket.emit(
-        "world-chat-leave"
+        "world-chat-leave", { userId: user?.id}
       );
       socket.off(
         "world-chat-count"

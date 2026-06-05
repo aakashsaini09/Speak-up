@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
 import ChatPanel from "@/components/ChatPanel";
+import {useRouter} from "next/navigation";
 type Participant = {
   userId: string;
   name: string;
@@ -16,6 +17,7 @@ type ParticipantProps = {
   participant: Participant;
 };
 export default function Page() {
+  const router = useRouter()
     const {user} = useUser();
     const { id } = useParams();
     const [participants, setParticipants] = useState<Participant[]>([]);
@@ -38,7 +40,6 @@ export default function Page() {
     const handleCount = (count: number) => {
       setUserCount(count);
     };
-
     const handleParticipants = (data: Participant[]) => {
       setParticipants(data);
     };
@@ -51,17 +52,27 @@ export default function Page() {
     socket.on("room-message", (data) => {
       console.log(data);
     });
+    // socket.on("leave-room", (data) => {
+    //   console.log(data);
+    // });
   return () => {
+    socket.emit("leave-room")
     socket.off("room-message");
     socket.off("message");
     socket.off("participants-count", handleCount);
     socket.off( "participants-update", handleParticipants);
-};
-  }, [id, user?.id]);
+}}, [id, user?.id]);
 
   const [micEnabled, setMicEnabled] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
 
+  const leaveRoom = () => {
+    socket.emit(
+    "leave-room"
+  );
+
+  router.push("/");
+  }
   return (
     <div className="h-screen bg-zinc-950 text-white flex">
       {/* Main Section */}
@@ -103,7 +114,7 @@ export default function Page() {
             )}
           </button>
 
-          <button className="p-3 rounded-xl bg-red-600 hover:bg-red-500">
+          <button onClick={leaveRoom} className="p-3 rounded-xl bg-red-600 hover:bg-red-500 cursor-pointer">
             <PhoneOff size={20} />
           </button>
         </div>
