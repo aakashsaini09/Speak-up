@@ -12,7 +12,7 @@ const GetRooms = () => {
     const fetchRoomFunction = async () => {
         try {
             const res = await axios.get(`${backendUrl}/api/room`);
-            console.log("response is: ", res.data.rooms)
+            // console.log("response is: ", res.data.rooms)
             setRooms(res.data.rooms)
             if (res.data?.success) {
                 toast.success("Room fetched successfully!");

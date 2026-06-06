@@ -19,17 +19,18 @@ type ParticipantProps = {
 };
 export default function Page() {
   const router = useRouter()
-    const {user} = useUser();
-    const { id } = useParams();
-    const [participants, setParticipants] = useState<Participant[]>([]);
-    const [userCount, setUserCount] = useState(0);
+  const {user} = useUser();
+  const { id } = useParams();
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [userCount, setUserCount] = useState(0);
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
     useEffect(() => {
       console.log(
         "Updated participants:",
         participants
       );
     }, [participants]);
-
   useEffect(() => {
       if (!id || !user?.id) return;
     const userAndRoomData = {
@@ -39,34 +40,30 @@ export default function Page() {
       imageUrl: user?.imageUrl
     };
     const handleCount = (count: number) => {
+      // console.log("Count Hit: ", count)
       setUserCount(count);
     };
     const handleParticipants = (data: Participant[]) => {
       setParticipants(data);
     };
-    console.log("JOINING");
-    socket.emit("join-room", userAndRoomData);
+    // console.log("JOINING");
     socket.on("participants-count", (count) => {
       handleCount(count)
     });
     socket.on("participants-update", handleParticipants )
-    socket.on("room-message", (data) => {
-      console.log(data);
-    });
+    // socket.on("room-message", (data) => {
+    // });
+    socket.emit("join-room", userAndRoomData);
     // socket.on("leave-room", (data) => {
     //   console.log(data);
     // });
   return () => {
-    socket.emit("leave-room")
+    // socket.emit("leave-room")
     socket.off("room-message");
     socket.off("message");
     socket.off("participants-count", handleCount);
     socket.off( "participants-update", handleParticipants);
 }}, [id, user?.id]);
-
-  const [micEnabled, setMicEnabled] = useState(false);
-  const [cameraEnabled, setCameraEnabled] = useState(false);
-
   const leaveRoom = () => {
     socket.emit(
     "leave-room"
@@ -151,10 +148,10 @@ export default function Page() {
       </div>
 
       {/* Chat */}
-      {/* <ChatPanel /> */}
-      <div className="absolute top-4 right-4">
+      <ChatPanel />
+      {/* <div className="absolute top-4 right-4">
         <PrivateRoomChat/>
-      </div>
+      </div> */}
     </div>
   );
 }

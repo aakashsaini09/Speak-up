@@ -36,6 +36,7 @@ export const initializeSocket = async (server) => {
   const count = activeRooms.get(roomId).participants.size;
   updateUserCount(count, roomId)
   io.to(roomId).emit("participants-count", count);
+  // console.log("Reached to count")
   io.to(roomId).emit("participants-update",  participants);
   io.to(roomId).emit("room-message", `User ${socket.id} joined`);
   // console.log( "participants map:",  activeRooms.get(roomId).participants);
@@ -45,9 +46,25 @@ export const initializeSocket = async (server) => {
   socket.on("room-message", (data)=> {
     console.log("data: ", data)
     const roomId = socket.roomId;
-    console.log("roomId: ", roomId)
+    // console.log("roomId: ", roomId)
     io.to(roomId).emit("room-message", data)
   })
+  socket.on("leave-room", async () => {
+  const roomId = socket.roomId;
+  const userId = socket.userId;
+  if ( roomId && activeRooms.has(roomId)) {
+    activeRooms.get(roomId).participants.delete(userId);
+    const participants = Array.from(activeRooms.get(roomId).participants.values());
+    const count = participants.length;
+    await updateUserCount(count, roomId );
+    if ( activeRooms.get(roomId).participants.size === 0) {
+      activeRooms.delete(roomId); 
+    }
+    io.to(roomId).emit( "participants-count", count);
+    io.to(roomId).emit("participants-update",  participants );
+    socket.leave(roomId);
+  }
+});
   socket.on( "world-chat-join", user => {
     socket.userId =
     user.userId;
@@ -68,22 +85,7 @@ socket.on("world-chat-leave", () => {
     // console.log("Data in server side: ", data)
     io.emit("world-chat-message", data)
   });
-  socket.on("leave-room", async () => {
-  const roomId = socket.roomId;
-  const userId = socket.userId;
-  if ( roomId && activeRooms.has(roomId)) {
-    activeRooms.get(roomId).participants.delete(userId);
-    const participants = Array.from(activeRooms.get(roomId).participants.values());
-    const count = participants.length;
-    await updateUserCount(count, roomId );
-    if ( activeRooms.get(roomId).participants.size === 0) {
-      activeRooms.delete(roomId); 
-    }
-    io.to(roomId).emit( "participants-count", count);
-    io.to(roomId).emit("participants-update",  participants );
-    socket.leave(roomId);
-  }
-});
+  
   socket.on("disconnect", async () => {
   const roomId = socket.roomId;
   const userId = socket.userId;
