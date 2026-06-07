@@ -18,6 +18,22 @@ type ParticipantProps = {
   participant: Participant;
 };
 export default function Page() {
+  const videoGrid = document.getElementById('video-grid')
+  const myVideo = document.createElement('video')
+  myVideo.muted = true
+  navigator.mediaDevices.getUserMedia({
+    video: true,
+    audio: true
+  }).then(stream => {
+    addvideoStream(myVideo, stream)
+  })
+  function addvideoStream (video: any, stream: any){
+    video.srcObject = stream
+    video.addEventListener('loadedmetadata', () => {
+      video.play()
+    })
+    videoGrid?.append(video)
+  }
   const router = useRouter()
   const {user} = useUser();
   const { id } = useParams();

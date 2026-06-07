@@ -104,7 +104,7 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
               <Field>
               <Field>
                 <Label htmlFor="maxUser">Maxuser</Label>
-                <Input type="number" value={roomData?.maxUser} onChange={(e) => setDataFunction(e, "maxUser")} id="maxUser" name="maxUser" placeholder="Number of User can Join" />
+                <Input type="number" value={roomData?.maxUser} min={1} max={6} onChange={(e) => setDataFunction(e, "maxUser")} id="maxUser" name="maxUser" placeholder="Number of User can Join" />
               </Field>
                 <Label htmlFor="language">Language</Label>
 

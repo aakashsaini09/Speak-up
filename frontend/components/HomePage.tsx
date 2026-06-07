@@ -10,11 +10,11 @@ import GetRooms from './GetRooms';
 import WorldChat from './WorldChat';
 const HomePage = () => {
 
-    const [value, setValue] = useState<string | undefined>("rooms")
+    const [value, setValue] = useState<string>("rooms")
 
     return (
         <div>
-            <Navbar />
+            <Navbar value={value}/>
             {value == 'rooms' ? (
                 <GetRooms/>
                 ) : (
