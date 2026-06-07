@@ -4,6 +4,7 @@ import { socket } from "@/lib/socket";
 import { useUser } from "@clerk/nextjs";
 import { Send, Globe } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export default function WorldChat() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -92,6 +93,10 @@ export default function WorldChat() {
   }, []);
 
   function sendMessage() {
+    if(!user || !user?.id){
+      toast.error("Please login first!")
+      return;
+    }
     const trimmedMessage = message.trim();
     if (!trimmedMessage) return;
 

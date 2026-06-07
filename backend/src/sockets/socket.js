@@ -15,6 +15,9 @@ export const initializeSocket = async (server) => {
     const {roomId, userId, name, imageUrl} = data;
     socket.roomId = roomId;
     socket.userId = userId;
+    if(!userId || !roomId){
+      return;
+    }
     socket.join(roomId)
     console.log("RoomId: ", roomId, "userId: ", userId);
 

@@ -1,6 +1,8 @@
 "use client"
 import { useRouter } from "next/navigation";
 import {User} from 'lucide-react'
+import { useUser } from "@clerk/nextjs";
+import { toast } from "sonner";
 type RoomProps = {
     room: {
         _id: string;
@@ -16,16 +18,21 @@ type RoomProps = {
     };
 };
 export default function RoomCard({ room }: RoomProps) {
+    const { user } = useUser()
     const router = useRouter()
-    // const joinRoom = (roomId: string) =>{
-    //     console.log(roomId)
-    // }
+    const goToRoom = (id: string) => {
+           if (!id || !user?.id) {
+            // router.push('/')
+            toast.error("Please login first")
+            return;
+        };
+        router.push(`/room/${id}`)
+    }
     const participants = room.participantsList || [];
-
     const avatarSize =
-        participants.length > 3
-            ? "w-8 h-8"
-            : "w-10 h-10";
+        room.maxUser > 3
+            ? "w-22 h-22"
+            : "w-28 h-28";
 
     return (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col justify-between h-80 shadow-md hover:border-zinc-700 transition-all">
@@ -53,35 +60,40 @@ export default function RoomCard({ room }: RoomProps) {
             {/* Participants Section */}
             <div className="h-22.5 flex items-center justify-center">
 
-                {participants.length === 0 ? (
+                {room.maxUser === 0 ? (
                     <div className="flex gap-3">
                     <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
                     <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
                     <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
                     </div>
                 ) : (
-                    <div
-                        className={`grid ${participants.length > 3
-                                ? "grid-cols-3 gap-2"
-                                : "grid-cols-3 gap-3"
-                            }`}
-                    >
-                        {participants.map((participant) => (
-                            <img
-                                key={participant.id}
-                                // src={participant.image}
-                                src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"
-                                alt=""
-                                className={`${avatarSize} rounded-full object-cover border border-zinc-700`}
-                            />
-                        ))}
+                <div className={`grid ${room.maxUser > 3 ? "grid-cols-3 gap-2" : "grid-cols-3 gap-3" }`} >
+                    {Array.from({ length: room.maxUser }, (_, i) => (
+                        <div key={i}>
+                            <div className={`${avatarSize} border-2 rounded-full border-dashed ${i < room.activeParticipants ? 'bg-' : ''}`}>
+                                {i < room.activeParticipants ? (
+                                    <img src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"
+                                alt="" className={`${avatarSize} rounded-full object-cover border border-zinc-700`} />
+                                ) : (<></>)}
+                            </div>
+                        </div>
+                    ))}
+                {/* {participants.map((participant) => (
+                <img
+                key={participant.id}
+                // src={participant.image}
+                src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"
+                alt=""
+                className={`${avatarSize} rounded-full object-cover border border-zinc-700`}
+                 />
+                ))} */}
                     </div>
                 )}
             </div>
 
             {/* Footer */}
             <div className="flex justify-center">
-                <button onClick={() => router.push(`/room/${room._id}`)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition cursor-pointer">
+                <button onClick={()=> goToRoom(room._id)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition cursor-pointer">
                     Join Room
                 </button>
             </div>

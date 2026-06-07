@@ -25,6 +25,9 @@ export default function Page() {
   const [userCount, setUserCount] = useState(0);
   const [micEnabled, setMicEnabled] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
+  //  if (!id || !user?.id) {
+  //       router.push('/')
+  //     };
     useEffect(() => {
       console.log(
         "Updated participants:",
@@ -32,7 +35,6 @@ export default function Page() {
       );
     }, [participants]);
   useEffect(() => {
-      if (!id || !user?.id) return;
     const userAndRoomData = {
       roomId: id,
       userId: user?.id,
