@@ -66,13 +66,18 @@ export default function Page() {
     socket.on("participants-count", (count) => {
       handleCount(count)
     });
+    const pc = new RTCPeerConnection();
     socket.on("webrtc-offer", async (sdp) => {
-      // console.log("sdp received: ", sdp)
-      const pc = new RTCPeerConnection();
+      console.log("offer received: ", sdp)
       await pc.setRemoteDescription(sdp.sdp);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      console.log("Sending answer: ", pc.localDescription)
       socket.emit('webrtc-answer', { sdp: pc.localDescription});
+    })
+    socket.on("webrtc-answer", (answer) => {
+      console.log("answer received: ", answer)
+      pc.setRemoteDescription(answer.sdp)
     })
     socket.on("participants-update", handleParticipants )
     socket.emit("join-room", userAndRoomData);
@@ -86,23 +91,13 @@ export default function Page() {
     socket.off("participants-count", handleCount);
     socket.off( "participants-update", handleParticipants);
 }}, [id, user?.id]);
-  // useEffect(() => {
-    // if(micEnabled){
-    //   setloading(true);
-    //   setTimeout(() =>{
-    //     setloading(false)
-    //   }, 3000)
-      // socket.emit("webrtc-offer")
-      // socket.emit("webrtc-answer")
-      // socket.emit("ice-candidate")
-    // }
-  // }, [])
   const audioFunction = async () => {
     // setloading(true)
     setMicEnabled(!micEnabled);
     const pc = new RTCPeerConnection();
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
+    console.log("c1 sending offer: ", pc.localDescription)
     socket.emit('webrtc-offer',{ sdp: pc.localDescription, id })
   }
   const leaveRoom = () => {

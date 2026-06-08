@@ -75,11 +75,12 @@ export const initializeSocket = async (server) => {
 // webRTC connection logic
 // socket.broadcast
   socket.on("webrtc-offer",( sdp) => {
-    // console.log("sdp is: ", sdp.id)
+    console.log("offer sending to c2: ", sdp)
     io.to(sdp.id).emit("webrtc-offer", sdp)
   });
-  socket.on("webrtc-answer", answer => {
-
+  socket.on("webrtc-answer", (answer) => {
+    console.log("answer received: ", answer)
+    io.to(answer.id).emit("webrtc-answer", answer)
   });
   socket.on("ice-candidate", ice => {
     
