@@ -3,6 +3,8 @@ import { activeRooms, worldChatUsers } from "./activeRooms.js";
 import Room from "../models/room.model.js";
 import { updateUserCount } from "./updateInDB.js";
 let io;
+let senderSocket;
+let receiverSocket;
 export const initializeSocket = async (server) => {
   io = new Server(server, {
     cors: {
@@ -11,6 +13,7 @@ export const initializeSocket = async (server) => {
     },
   });
   io.on("connection", (socket) => {
+    // room joining socket logic
   socket.on("join-room", (data) => {
     const {roomId, userId, name, imageUrl} = data;
     socket.roomId = roomId;
@@ -68,6 +71,22 @@ export const initializeSocket = async (server) => {
     socket.leave(roomId);
   }
 });
+
+// webRTC connection logic
+// socket.broadcast
+  socket.on("webrtc-offer",( sdp) => {
+    // console.log("sdp is: ", sdp.id)
+    io.to(sdp.id).emit("webrtc-offer", sdp)
+  });
+  socket.on("webrtc-answer", answer => {
+
+  });
+  socket.on("ice-candidate", ice => {
+    
+  });
+
+
+// world chat socket logic
   socket.on( "world-chat-join", user => {
     socket.userId =
     user.userId;
@@ -88,7 +107,6 @@ socket.on("world-chat-leave", () => {
     // console.log("Data in server side: ", data)
     io.emit("world-chat-message", data)
   });
-  
   socket.on("disconnect", async () => {
   const roomId = socket.roomId;
   const userId = socket.userId;

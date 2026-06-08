@@ -18,38 +18,36 @@ type ParticipantProps = {
   participant: Participant;
 };
 export default function Page() {
-  const videoGrid = document.getElementById('video-grid')
-  const myVideo = document.createElement('video')
-  myVideo.muted = true
-  navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true
-  }).then(stream => {
-    addvideoStream(myVideo, stream)
-  })
-  function addvideoStream (video: any, stream: any){
-    video.srcObject = stream
-    video.addEventListener('loadedmetadata', () => {
-      video.play()
-    })
-    videoGrid?.append(video)
-  }
+  // const videoGrid = document.getElementById('video-grid')
+  // const myVideo = document.createElement('video')
+  // myVideo.muted = true
+  // navigator.mediaDevices.getUserMedia({
+  //   video: true,
+  //   audio: true
+  // }).then(stream => {
+  //   addvideoStream(myVideo, stream)
+  // })
+  // function addvideoStream (video: any, stream: any){
+  //   video.srcObject = stream
+  //   video.addEventListener('loadedmetadata', () => {
+  //     video.play()
+  //   })
+  //   videoGrid?.append(video)
+  // }
   const router = useRouter()
   const {user} = useUser();
   const { id } = useParams();
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [userCount, setUserCount] = useState(0);
+  const [loading, setloading] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
-  //  if (!id || !user?.id) {
-  //       router.push('/')
-  //     };
-    useEffect(() => {
-      console.log(
-        "Updated participants:",
-        participants
-      );
-    }, [participants]);
+    // useEffect(() => {
+    //   console.log(
+    //     "Updated participants:",
+    //     participants
+    //   );
+    // }, [participants]);
   useEffect(() => {
     const userAndRoomData = {
       roomId: id,
@@ -68,9 +66,15 @@ export default function Page() {
     socket.on("participants-count", (count) => {
       handleCount(count)
     });
+    socket.on("webrtc-offer", async (sdp) => {
+      // console.log("sdp received: ", sdp)
+      const pc = new RTCPeerConnection();
+      await pc.setRemoteDescription(sdp.sdp);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('webrtc-answer', { sdp: pc.localDescription});
+    })
     socket.on("participants-update", handleParticipants )
-    // socket.on("room-message", (data) => {
-    // });
     socket.emit("join-room", userAndRoomData);
     // socket.on("leave-room", (data) => {
     //   console.log(data);
@@ -82,6 +86,25 @@ export default function Page() {
     socket.off("participants-count", handleCount);
     socket.off( "participants-update", handleParticipants);
 }}, [id, user?.id]);
+  // useEffect(() => {
+    // if(micEnabled){
+    //   setloading(true);
+    //   setTimeout(() =>{
+    //     setloading(false)
+    //   }, 3000)
+      // socket.emit("webrtc-offer")
+      // socket.emit("webrtc-answer")
+      // socket.emit("ice-candidate")
+    // }
+  // }, [])
+  const audioFunction = async () => {
+    // setloading(true)
+    setMicEnabled(!micEnabled);
+    const pc = new RTCPeerConnection();
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit('webrtc-offer',{ sdp: pc.localDescription, id })
+  }
   const leaveRoom = () => {
     socket.emit(
     "leave-room"
@@ -96,10 +119,7 @@ export default function Page() {
 
         {/* Top Controls */}
         <div className="flex justify-center gap-4 p-4">
-          <button
-            onClick={() =>
-              setMicEnabled(!micEnabled)
-            }
+          <button disabled={loading} onClick={() => audioFunction()}
             className={`p-3 rounded-xl ${
               micEnabled
                 ? "bg-green-600"
