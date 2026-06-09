@@ -87,6 +87,38 @@ export const initializeSocket = async (server) => {
   });
 
 
+
+  // ********************************For testing only************************************
+  let senderId = null;
+let receiverId = null;
+  socket.on("create-toffer", (data) => {
+    io.to(receiverId)
+      .emit( "create-toffer", data );
+  }
+);
+  socket.on("create-tanswer", (data) => { 
+    io.to(senderId).emit("create-tanswer", data);
+  }
+);
+  socket.on("ice-tcandidate", (data) => {
+    if (socket.id === senderId ) {
+      io.to(receiverId)
+        .emit(
+          "ice-tcandidate",
+          data
+        );
+    }
+    else if (socket.id === receiverId) {
+      io.to(senderId)
+        .emit("ice-tcandidate", data);
+    }
+
+  }
+);
+
+  // ********************************For testing only************************************
+
+
 // world chat socket logic
   socket.on( "world-chat-join", user => {
     socket.userId =
