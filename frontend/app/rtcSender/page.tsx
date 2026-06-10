@@ -10,6 +10,7 @@ const page = () => {
       await pc.setRemoteDescription(message.sdp)
     })
     socket.on("create-tanswer", async (message) => {
+      console.log("Answer rec: ", message.sdp)
     await pc.setRemoteDescription( message.sdp);
   }
 );
@@ -23,11 +24,6 @@ const page = () => {
         socket.emit("ice-tcandidate", {candidate: event.candidate})
       }
     })
-    pc.onicecandidate = (event) => {
-    if (event.candidate) {
-      socket.emit("ice-candidate", { candidate: event.candidate });
-    }
-  };
     pc.onnegotiationneeded = async () => {
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
