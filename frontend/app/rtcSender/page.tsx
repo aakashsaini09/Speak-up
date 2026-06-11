@@ -5,44 +5,35 @@ import { socket } from "@/lib/socket";
 const page = () => {
   const [pc, setPc] = useState<RTCPeerConnection | null>(null)
   const iniciateConnection = async() => {
-    socket.on("create-toffer", async(message) => {
-      // socket.emit("sending-offer")
-      await pc.setRemoteDescription(message.sdp)
-    })
-    socket.on("create-tanswer", async (message) => {
+    socket.on("s-create-answer", async (message) => {
       console.log("Answer rec: ", message.sdp)
     await pc.setRemoteDescription( message.sdp);
   }
 );
-    socket.on("ice-tcandidate", (ice) =>{
+    socket.on("ice-from-receiver", (ice) =>{
+      console.log("sender got ice: ", ice)
       pc.addIceCandidate(ice.candidate)
     })
     const pc = new RTCPeerConnection();
     setPc(pc);
     pc.onicecandidate = ((event) => {
       if(event.candidate){
-        socket.emit("ice-tcandidate", {candidate: event.candidate})
+        socket.emit("ice-from-sender", {candidate: event.candidate})
       }
     })
     pc.onnegotiationneeded = async () => {
+      console.log("onnegotiationneeded")
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit("create-toffer", {sdp: pc.localDescription});
     }      
-    getCameraStreamAndSend(pc);
+    // getCameraStreamAndSend(pc);
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
+    })
+    pc.addTrack(stream.getVideoTracks()[0]);
   }
-  const getCameraStreamAndSend = (pc: RTCPeerConnection) => {
-    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        video.play();
-        // this is wrong, should propogate via a component
-        document.body.appendChild(video);
-        stream.getTracks().forEach((track) => {
-            pc.addTrack(track, stream);
-        });
-    });
-    }
   return (
     <>
       <div className='w-screen h-screen flex justify-center items-center'>

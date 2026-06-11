@@ -92,31 +92,21 @@ export const initializeSocket = async (server) => {
   let senderId = null;
 let receiverId = null;
   socket.on("create-toffer", (data) => {
-    // console.log("data: ", data)
-    console.log("oN create Offer: sender:", senderId, "receiver:", receiverId);
-    // io.to(receiverId).emit( "create-toffer", data );
-    io.emit("create-toffer", data)
+    io.emit("roffer", data)
   }
 );
-  socket.on("create-tanswer", (data) => { 
-    console.log( "On createanswer: sender:", senderId, "receiver:", receiverId);
-    console.log("answer received: ", data)
-    io.emit("create-tanswer", data);
+  socket.on("r-create-answer", (data) => { 
+    io.emit("s-create-answer", data);
   }
 );
-  socket.on("ice-tcandidate", (data) => {
-    if (socket.id === senderId ) {
-      console.log("oN ice candidate: sender:", senderId, "receiver:", receiverId);
-      io.to(receiverId).emit("ice-tcandidate", data);
-    }
-    else if (socket.id === receiverId) {
-      console.log("on ice candidate: sender:", senderId, "receiver:", receiverId);
-      io.to(senderId).emit("ice-tcandidate", data);
-    }
-
+  socket.on("ice-from-sender", (data) => {
+    io.emit("ice-from-sender", data)
   }
 );
-
+  socket.on("ice-from-receiver", (data) => {
+    io.emit("ice-from-receiver", data)
+  }
+);
   // ********************************For testing only************************************
 
 
