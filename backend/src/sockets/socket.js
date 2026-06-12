@@ -72,16 +72,24 @@ export const initializeSocket = async (server) => {
 });
 
 // webRTC connection logic
-  socket.on("webrtc-offer",( sdp) => {
-    console.log("offer sending to c2: ", sdp)
-    io.to(sdp.id).emit("webrtc-offer", sdp)
+  socket.on("webrtc-offer", data => {
+    const {targetUserId, sdp} = data;
+    const targetSocketId = activeRooms.get(socket.roomId).participants.get(targetUserId).socketId;
+    io.to(targetSocketId).emit("webrtc-offer", {
+      senderUserId: socket.userId,
+      sdp
+    })
   });
   socket.on("webrtc-answer", (answer) => {
-    console.log("answer received: ", answer)
-    io.to(answer.id).emit("webrtc-answer", answer)
+    const {targetUserId, sdp} = answer;
+    const targetSocketId = activeRooms.get(socket.roomId).participants.get(targetUserId).socketId;
+    io.to(targetSocketId).emit("webrtc-answer",{
+      senderUserId:  socket.userId,
+      sdp
+    })
   });
   socket.on("ice-candidate", ice => {
-    
+
   });
 
 

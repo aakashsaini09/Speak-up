@@ -7,7 +7,7 @@ export const connectToDatabase = async () => {
     if(cached.conn) return cached.conn;
 
     if(!cached.promise){
-        cached.promise = mongoose.connect(MONGO_URL, { bufferCommands: false});
+        cached.promise = await mongoose.connect(MONGO_URL, { bufferCommands: false});
     }
     try{
         cached.conn = await cached.promise;
