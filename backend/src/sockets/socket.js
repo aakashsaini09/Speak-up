@@ -13,7 +13,7 @@ export const initializeSocket = async (server) => {
     },
   });
   io.on("connection", (socket) => {
-    // room joining socket logic
+// room joining socket logic
   socket.on("join-room", (data) => {
     const {roomId, userId, name, imageUrl} = data;
     socket.roomId = roomId;
@@ -23,23 +23,23 @@ export const initializeSocket = async (server) => {
     }
     socket.join(roomId)
     console.log("RoomId: ", roomId, "userId: ", userId);
-
-  if (!activeRooms.has(roomId)) {
-  activeRooms.set(roomId, {
-    participants: new Map(),
-  });
-  }
-  activeRooms
-  .get(roomId)
-  .participants
-  .set(userId, {
-    userId,
-    socketId: socket.id,
-    name,
-    imageUrl,
-  });
-  const participants = Array.from(activeRooms.get(roomId).participants.values());
-  const count = activeRooms.get(roomId).participants.size;
+    if (!activeRooms.has(roomId)) {
+    activeRooms.set(roomId, {
+      participants: new Map(),
+    });
+    }
+    activeRooms
+    .get(roomId)
+    .participants
+    .set(userId, {
+      userId,
+      socketId: socket.id,
+      name,
+      imageUrl,
+    });
+    const participants = Array.from(activeRooms.get(roomId).participants.values());
+    const count = activeRooms.get(roomId).participants.size;
+    socket.emit("existing-participants", participants)
   updateUserCount(count, roomId)
   io.to(roomId).emit("participants-count", count);
   // console.log("Reached to count")
@@ -50,9 +50,8 @@ export const initializeSocket = async (server) => {
   // console.log( "count:", count);
   });
   socket.on("room-message", (data)=> {
-    console.log("data: ", data)
+    // console.log("data: ", data)
     const roomId = socket.roomId;
-    // console.log("roomId: ", roomId)
     io.to(roomId).emit("room-message", data)
   })
   socket.on("leave-room", async () => {
@@ -73,7 +72,6 @@ export const initializeSocket = async (server) => {
 });
 
 // webRTC connection logic
-// socket.broadcast
   socket.on("webrtc-offer",( sdp) => {
     console.log("offer sending to c2: ", sdp)
     io.to(sdp.id).emit("webrtc-offer", sdp)
@@ -88,30 +86,32 @@ export const initializeSocket = async (server) => {
 
 
 
-  // ********************************For testing only************************************
-  let senderId = null;
-let receiverId = null;
-  socket.on("create-toffer", (data) => {
-    io.emit("roffer", data)
-  }
-);
-  socket.on("r-create-answer", (data) => { 
-    io.emit("s-create-answer", data);
-  }
-);
-  socket.on("ice-from-sender", (data) => {
-    io.emit("ice-from-sender", data)
-  }
-);
-  socket.on("ice-from-receiver", (data) => {
-    io.emit("ice-from-receiver", data)
-  }
-);
-  // ********************************For testing only************************************
+// ********************************For testing only************************************
+//   let senderId = null;
+// let receiverId = null;
+//   socket.on("create-toffer", (data) => {
+//     io.emit("roffer", data)
+//   }
+// );
+//   socket.on("r-create-answer", (data) => { 
+//     io.emit("s-create-answer", data);
+//   }
+// );
+//   socket.on("ice-from-sender", (data) => {
+//     io.emit("ice-from-sender", data)
+//   }
+// );
+//   socket.on("ice-from-receiver", (data) => {
+//     io.emit("ice-from-receiver", data)
+//   }
+// );
+// ********************************For testing only************************************
+
+
 
 
 // world chat socket logic
-  socket.on( "world-chat-join", user => {
+socket.on( "world-chat-join", user => {
     socket.userId =
     user.userId;
     worldChatUsers.set( user.userId, user);
@@ -162,6 +162,7 @@ socket.on("world-chat-leave", () => {
     );
   }
 });
+
 });
   return io;
 };
