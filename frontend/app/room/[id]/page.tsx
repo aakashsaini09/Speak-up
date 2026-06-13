@@ -41,13 +41,84 @@ export default function Page() {
     const handleParticipants = (data: Participant[]) => {
       setParticipants(data);
     };
-    const createOfferFunction = async (participants: Participant[]) => {
-      if(participants.length <= 1){
-        return
+    
+    socket.on("participants-count", (count) => {
+      handleCount(count)
+    });
+    socket.on("existing-participants", participants => {
+      createOfferFunction(participants)
+    })
+    socket.on("webrtc-offer", async data => {
+      console.log("Offer receiver: ")
+      const pc = new RTCPeerConnection()
+      peerConnections.current.set(
+        data.senderUserId, pc
+      )
+      await pc.setRemoteDescription(data.sdp)
+      const answer = await pc.createAnswer()
+      await pc.setLocalDescription(answer)
+      socket.emit("webrtc-answer", {
+        targetUserId: data.senderUserId,
+        sdp: pc.localDescription
+      })
+    })
+    socket.on("webrtc-answer", async data => {
+        const { senderUserId, sdp } = data;
+        console.log("receiver answer from: ", senderUserId)
+        const pc = peerConnections.current.get( senderUserId);
+        if (!pc) {
+          return;
+        }
+        if (pc.signalingState !== "have-local-offer") { 
+          console.log("Ignoring answer, state:", pc.signalingState );
+          return;
+        }
+        console.log("senderUserId:", senderUserId);
+        console.log("signalingState:", pc.signalingState);
+        await pc.setRemoteDescription(sdp);
       }
-      console.log("Inside createOfferFunction: ", participants)
+    );
+    socket.on("ice-candidate", async data => {
+    const pc = peerConnections.current.get( data.senderUserId);
+    if (!pc) {
+      return;
+    }
+    await pc.addIceCandidate(data.candidate);
+    }
+  );
+    socket.on("participants-update", handleParticipants)
+    socket.emit("join-room", userAndRoomData);
+    // socket.on("leave-room", (data) => {
+    //   console.log(data);
+    // });
+    return () => {
+      // socket.emit("leave-room")
+      socket.off("room-message");
+      socket.off("existing-participants")
+      socket.off("webrtc-offer")
+      socket.off("webrtc-answer")
+      socket.off("ice-candidate")
+      socket.off("message");
+      socket.off("participants-count", handleCount);
+      socket.off("participants-update", handleParticipants);
+    }
+  }, [id, user?.id]);
+  const createOfferFunction = async (participants: Participant[]) => {
+      const others = participants.filter(
+        p => p.userId !== user?.id
+      );
+      if (others.length === 0) {
+        return;
+      }
+      console.log("Inside createOfferFunction: ")
       for (const participant of participants) {
-        const pc = new RTCPeerConnection();
+        if (participant.userId === user?.id) {
+          continue;
+        }
+        if (peerConnections.current.has( participant.userId)) {
+          continue;
+        }
+        const pc =  new RTCPeerConnection();
         peerConnections.current.set(  participant.userId, pc );
         pc.onicecandidate = (  event  ) => {
           console.log("iceCandidate: ", event.candidate)
@@ -70,55 +141,6 @@ export default function Page() {
         );
       }
     };
-    socket.on("participants-count", (count) => {
-      handleCount(count)
-    });
-    socket.on("existing-participants", participants => {
-      createOfferFunction(participants)
-    })
-    socket.on("webrtc-offer", async data => {
-      // console.log("Offer receiver: ", data)
-      const pc = new RTCPeerConnection()
-      peerConnections.current.set(
-        data.senderUserId, pc
-      )
-      await pc.setRemoteDescription(data.sdp)
-      const answer = await pc.createAnswer()
-      await pc.setLocalDescription(answer)
-      console.log(data.senderUserId, pc.localDescription)
-      socket.emit("webrtc-answer", {
-        targetUserId: data.senderUserId,
-        sdp: pc.localDescription
-      })
-    })
-    socket.on("webrtc-answer", async data => {
-        const { senderUserId, sdp } = data;
-        console.log("receiver answer from: ", senderUserId)
-        const pc = peerConnections.current.get( senderUserId);
-        if (!pc) {
-          return;
-        }
-        console.log("senderUserId:", senderUserId);
-        console.log("signalingState:", pc.signalingState);
-        await pc.setRemoteDescription(sdp);
-      }
-    );
-    socket.on("participants-update", handleParticipants)
-    socket.emit("join-room", userAndRoomData);
-    // socket.on("leave-room", (data) => {
-    //   console.log(data);
-    // });
-    return () => {
-      // socket.emit("leave-room")
-      socket.off("room-message");
-      socket.off("existing-participants")
-      socket.off("webrtc-offer")
-      socket.off("webrtc-answer")
-      socket.off("message");
-      socket.off("participants-count", handleCount);
-      socket.off("participants-update", handleParticipants);
-    }
-  }, [id, user?.id]);
   const audioFunction = async () => {
     setloading(true)
     setMicEnabled(!micEnabled);

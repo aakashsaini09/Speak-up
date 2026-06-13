@@ -88,9 +88,18 @@ export const initializeSocket = async (server) => {
       sdp
     })
   });
-  socket.on("ice-candidate", ice => {
-
-  });
+  socket.on( "ice-candidate", data => {
+    const {targetUserId, candidate} = data;
+    const targetSocketId =
+      activeRooms.get(socket.roomId).participants.get(targetUserId).socketId;
+    io.to(targetSocketId) .emit("ice-candidate", {
+          senderUserId:
+            socket.userId,
+          candidate
+        }
+      );
+  }
+);
 
 
 
