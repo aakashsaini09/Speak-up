@@ -92,7 +92,7 @@ export const initializeSocket = async (server) => {
     const {targetUserId, candidate} = data;
     const targetSocketId =
       activeRooms.get(socket.roomId).participants.get(targetUserId).socketId;
-    io.to(targetSocketId) .emit("ice-candidate", {
+    io.to(targetSocketId).emit("ice-candidate", {
           senderUserId:
             socket.userId,
           candidate

@@ -24,9 +24,10 @@ export default function Page() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [userCount, setUserCount] = useState(0);
   const [loading, setloading] = useState(false);
-  const [micEnabled, setMicEnabled] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
   const peerConnections = useRef(new Map<string, RTCPeerConnection>());
+  const localStream = useRef<MediaStream | null>(null);
   useEffect(() => {
     const userAndRoomData = {
       roomId: id,
@@ -35,7 +36,6 @@ export default function Page() {
       imageUrl: user?.imageUrl
     };
     const handleCount = (count: number) => {
-      // console.log("Count Hit: ", count)
       setUserCount(count);
     };
     const handleParticipants = (data: Participant[]) => {
@@ -49,11 +49,22 @@ export default function Page() {
       createOfferFunction(participants)
     })
     socket.on("webrtc-offer", async data => {
-      console.log("Offer receiver: ")
       const pc = new RTCPeerConnection()
+      pc.ontrack = (event) => {
+        console.log("REMOTE AUDIO RECEIVED");
+        const audio = new Audio();
+        audio.srcObject = event.streams[0];
+        audio.autoplay = true;
+        audio.play();
+      };
       peerConnections.current.set(
         data.senderUserId, pc
       )
+      if (localStream.current) {
+      localStream.current.getAudioTracks().forEach(track => {
+          pc.addTrack( track, localStream.current);
+        });
+    }
       await pc.setRemoteDescription(data.sdp)
       const answer = await pc.createAnswer()
       await pc.setLocalDescription(answer)
@@ -70,15 +81,16 @@ export default function Page() {
           return;
         }
         if (pc.signalingState !== "have-local-offer") { 
-          console.log("Ignoring answer, state:", pc.signalingState );
+          // console.log("Ignoring answer, state:", pc.signalingState );
           return;
         }
-        console.log("senderUserId:", senderUserId);
-        console.log("signalingState:", pc.signalingState);
+        // console.log("senderUserId:", senderUserId);
+        // console.log("signalingState:", pc.signalingState);
         await pc.setRemoteDescription(sdp);
       }
     );
     socket.on("ice-candidate", async data => {
+      console.log("ice candidate received: ", data)
     const pc = peerConnections.current.get( data.senderUserId);
     if (!pc) {
       return;
@@ -86,8 +98,16 @@ export default function Page() {
     await pc.addIceCandidate(data.candidate);
     }
   );
-    socket.on("participants-update", handleParticipants)
-    socket.emit("join-room", userAndRoomData);
+    socket.on("participants-update", handleParticipants);
+
+    (async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+      });
+      stream.getAudioTracks()[0].enabled = false;
+      localStream.current = stream;
+      socket.emit("join-room", userAndRoomData);
+    })();
     // socket.on("leave-room", (data) => {
     //   console.log(data);
     // });
@@ -111,7 +131,7 @@ export default function Page() {
         return;
       }
       console.log("Inside createOfferFunction: ")
-      for (const participant of participants) {
+      for (const participant of others) {
         if (participant.userId === user?.id) {
           continue;
         }
@@ -120,6 +140,12 @@ export default function Page() {
         }
         const pc =  new RTCPeerConnection();
         peerConnections.current.set(  participant.userId, pc );
+        if (localStream.current) {
+          localStream.current.getAudioTracks().forEach(track => {
+        console.log("Tracks: ", localStream.current?.getAudioTracks())
+      pc.addTrack( track, localStream.current );
+    });
+  }
         pc.onicecandidate = (  event  ) => {
           console.log("iceCandidate: ", event.candidate)
           if (event.candidate) {
@@ -141,14 +167,18 @@ export default function Page() {
         );
       }
     };
-  const audioFunction = async () => {
-    setloading(true)
-    setMicEnabled(!micEnabled);
-  }
+  const audioFunction = () => {
+    console.log(localStream.current ?.getAudioTracks()[0] ?.readyState)
+    console.log("audioF1", localStream.current ?.getAudioTracks()[0]);
+    console.log("audioF2", localStream.current ?.getAudioTracks()[0]?.enabled);
+  const track = localStream.current
+      ?.getAudioTracks()[0];
+  if (!track) return;
+  track.enabled = !track.enabled;
+  setMicEnabled( track.enabled );
+};
   const leaveRoom = () => {
-    socket.emit(
-      "leave-room"
-    );
+    socket.emit("leave-room" );
     router.push("/");
   }
   return (
