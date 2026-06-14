@@ -75,6 +75,7 @@ export const initializeSocket = async (server) => {
   socket.on("webrtc-offer", data => {
     const {targetUserId, sdp} = data;
     const targetSocketId = activeRooms.get(socket.roomId).participants.get(targetUserId).socketId;
+    if (!targetSocketId) return;
     io.to(targetSocketId).emit("webrtc-offer", {
       senderUserId: socket.userId,
       sdp
@@ -83,6 +84,7 @@ export const initializeSocket = async (server) => {
   socket.on("webrtc-answer", (answer) => {
     const {targetUserId, sdp} = answer;
     const targetSocketId = activeRooms.get(socket.roomId).participants.get(targetUserId).socketId;
+    if (!targetSocketId) return;
     io.to(targetSocketId).emit("webrtc-answer",{
       senderUserId:  socket.userId,
       sdp
@@ -92,6 +94,7 @@ export const initializeSocket = async (server) => {
     const {targetUserId, candidate} = data;
     const targetSocketId =
       activeRooms.get(socket.roomId).participants.get(targetUserId).socketId;
+    if (!targetSocketId) return;
     io.to(targetSocketId).emit("ice-candidate", {
           senderUserId:
             socket.userId,
@@ -100,32 +103,6 @@ export const initializeSocket = async (server) => {
       );
   }
 );
-
-
-
-// ********************************For testing only************************************
-//   let senderId = null;
-// let receiverId = null;
-//   socket.on("create-toffer", (data) => {
-//     io.emit("roffer", data)
-//   }
-// );
-//   socket.on("r-create-answer", (data) => { 
-//     io.emit("s-create-answer", data);
-//   }
-// );
-//   socket.on("ice-from-sender", (data) => {
-//     io.emit("ice-from-sender", data)
-//   }
-// );
-//   socket.on("ice-from-receiver", (data) => {
-//     io.emit("ice-from-receiver", data)
-//   }
-// );
-// ********************************For testing only************************************
-
-
-
 
 // world chat socket logic
 socket.on( "world-chat-join", user => {
