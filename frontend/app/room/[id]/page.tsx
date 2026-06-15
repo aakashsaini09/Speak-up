@@ -374,7 +374,7 @@ export default function RoomPage() {
 
 function ParticipantCard({ participant }: { participant: Participant }) {
   return (
-    <div className="min-w-[100px] bg-zinc-900 rounded-xl p-2 flex flex-col items-center border border-zinc-800">
+    <div className="min-w-25 bg-zinc-900 rounded-xl p-2 flex flex-col items-center border border-zinc-800">
       <img
         src={participant.imageUrl}
         alt={participant.name}

@@ -20,7 +20,7 @@ const clerkWebhookController = async (req, res) => {
     // ======================
     // USER CREATED
     // ======================
-    console.log("Data being saved in mongo: ", data.external_accounts[0].google_id)
+    console.log("Data being saved in mongo: ", data.external_accounts)
     if (evt.type === "user.created") {
       const existingUser = await User.findOne({
         clerkId: data.id,

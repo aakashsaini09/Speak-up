@@ -3,7 +3,8 @@ export const updateUserCount = async (count, roomId) => {
     // console.log("reached here: ", count)
   try {
     await Room.findByIdAndUpdate( roomId, {
-    activeParticipants: count
+    activeParticipants: count,
+    lastActiveAt: new Date()
   });
   } catch (error) {
     console.error("updating participant Error:", error);

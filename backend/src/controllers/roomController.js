@@ -38,10 +38,10 @@ export const createRoom = async (req, res) => {
       creatorId: user._id,
     });
 
-    if (roomCount >= 2) {
+    if (roomCount >= 3) {
       return res.status(400).json({
         success: false,
-        message: "Maximum 2 active rooms allowed. Delete previous rooms first.",
+        message: "Maximum 3 active rooms allowed. Delete previous rooms first.",
       });
     }
     // console.log("maxUser is: ", maxUser)
