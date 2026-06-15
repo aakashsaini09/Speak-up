@@ -93,7 +93,7 @@ export default function RoomPage() {
     };
 
     pc.onconnectionstatechange = () => {
-      console.log(`[WebRTC] ${userId} → ${pc.connectionState}`);
+      // console.log(`[WebRTC] ${userId} → ${pc.connectionState}`);
       // Attempt ICE restart on failure instead of giving up
       if (pc.connectionState === "failed") {
         console.warn(`[WebRTC] Connection to ${userId} failed, restarting ICE`);

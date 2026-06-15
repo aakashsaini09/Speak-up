@@ -62,13 +62,13 @@ export default function WorldChat() {
       }
     );
     socket.on("world-chat-count", count => {
-      console.log("count is: ", count)
+      // console.log("count is: ", count)
       setOnlineCount(count);
     }
     );
     socket.on("world-chat-message",
       data => {
-        console.log("data: ", data);
+        // console.log("data: ", data);
         const newMsg = {
           id: data?.id,
           name: data?.firstName || "Anonymous",

@@ -44,7 +44,7 @@ export const createRoom = async (req, res) => {
         message: "Maximum 3 active rooms allowed. Delete previous rooms first.",
       });
     }
-    console.log("UserImg: ", user.imageUrl)
+    // console.log("UserImg: ", user.imageUrl)
     // Create room
     const room = await Room.create({
       title: title.trim(),
@@ -56,7 +56,7 @@ export const createRoom = async (req, res) => {
       activeParticipants: 0,
       lastActiveAt: new Date(),
     });
-    console.log("Room image:", room.creatorImg);
+    // console.log("Room image:", room.creatorImg);
     return res.status(201).json({
       success: true,
       message: "Room created successfully",

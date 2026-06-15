@@ -6,12 +6,16 @@ let io;
 let senderSocket;
 let receiverSocket;
 export const initializeSocket = async (server) => {
-  io = new Server(server, {
-    cors: {
-      origin: "http://localhost:3000",
-      credentials: true,
-    },
-  });
+ const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:3000",
+      "https://speak-up.online",
+      "https://www.speak-up.online",
+    ],
+    credentials: true,
+  },
+});
   io.on("connection", (socket) => {
 // room joining socket logic
   socket.on("join-room", (data) => {
@@ -22,7 +26,7 @@ export const initializeSocket = async (server) => {
       return;
     }
     socket.join(roomId)
-    console.log("RoomId: ", roomId, "userId: ", userId);
+    // console.log("RoomId: ", roomId, "userId: ", userId);
     if (!activeRooms.has(roomId)) {
     activeRooms.set(roomId, {
       participants: new Map(),

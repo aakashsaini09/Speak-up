@@ -10,7 +10,7 @@ export const fetchRoomFunction = async (
     try {
         const res = await axios.get(`${backendUrl}/api/room`);
         setRooms(res.data.rooms)
-        console.log("room fetched: ", res.data.rooms)
+        // console.log("room fetched: ", res.data.rooms)
         if (res.data?.success) {
         } else {
             toast.error("Something went wrong");

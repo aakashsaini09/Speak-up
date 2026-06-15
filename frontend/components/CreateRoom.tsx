@@ -67,7 +67,7 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
         },
       }
     );
-    console.log("response is: ", res)
+    // console.log("response is: ", res)
     if (res.data?.success) {
       toast.success("Room created successfully!");
       fetchRoomFunction(backendUrl, () => {})
@@ -149,9 +149,9 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
             </FieldGroup>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant="outline" className='cursor-pointer'>Cancel</Button>
+                <Button disabled={loading} variant="outline" className='cursor-pointer'>Cancel</Button>
               </DialogClose>
-              <Button type="submit" className='cursor-pointer' onClick={createRoomFunction}>Create Room</Button>
+              <Button disabled={loading} type="submit" className='cursor-pointer' onClick={createRoomFunction}>Create Room</Button>
             </DialogFooter>
           </DialogContent>
         </form>
