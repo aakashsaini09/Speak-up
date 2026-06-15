@@ -40,8 +40,8 @@ export default function RoomCard({ room }: RoomProps) {
             {/* Header */}
             <div className="flex gap-3">
                 <img
-                      src={room.creatorImg}
-                    // src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"
+                    src={room.creatorImg ? room.creatorImg : 'https://imgs.search.brave.com/GwKK4NwXL6KxFDH7Ivikaj9TnRuJOx8urkkQDTnL48U/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/bWFnbmlmaWMuY29t/L3ByZW1pdW0tcGhv/dG8vYWRvcmFibGUt/Y2FydG9vbi1naXJs/LXdpdGgtYnVuLWhh/aXJzdHlsZS1yZWQt/c2NhcmYtZmFsbC1m/b2xpYWdlLWJhY2tn/cm91bmQtcGVyZmVj/dF85MTE4NDktNjA0/MzE1LmpwZz9zZW10/PWFpc19oeWJyaWQm/dz03NDAmcT04MA'}
+                    // src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"}
                     alt="creator"
                     className="w-12 h-12 rounded-full object-cover border border-zinc-700"
                 />

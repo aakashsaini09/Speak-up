@@ -24,7 +24,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 initializeSocket(server);
 connectToDatabase();
-startRoomCleanupJob();
+// startRoomCleanupJob();
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

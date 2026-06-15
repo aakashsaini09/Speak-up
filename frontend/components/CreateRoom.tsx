@@ -24,6 +24,7 @@ import { useState } from "react"
 import axios from "axios"
 import { toast, Toaster } from "sonner"
 import { getToken, useUser } from "@clerk/nextjs"
+import { fetchRoomFunction } from "./GetRooms"
 interface roomTypes {
   title: string,
   language: string,
@@ -31,6 +32,8 @@ interface roomTypes {
 }
 const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open: boolean) => void }) => {
   const [roomData, setRoomData] = useState<roomTypes>({ title: "", language: "English", maxUser: 3 })
+  const [loading, setloading] = useState(false)
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
   function setDataFunction(e: React.ChangeEvent<HTMLInputElement>, value: string) {
     if (value === "title") {
       setRoomData((prev) => ({ ...prev, title: e.target.value }))
@@ -41,11 +44,12 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
       setRoomData((prev) => ({ ...prev, language: e.target.value}))
     }
   }
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
  const createRoomFunction = async () => {
-  console.log("roomdata: ", roomData)
+  setloading(true)
+  // console.log("roomdata: ", roomData)
   if(roomData.title.length <=5){
     toast("Title is too short!!")
+    setloading(false)
     return;
   }
   if(!roomData.language){
@@ -66,9 +70,12 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
     console.log("response is: ", res)
     if (res.data?.success) {
       toast.success("Room created successfully!");
+      fetchRoomFunction(backendUrl, () => {})
+      setPopup(false)
     } else {
       toast.error("Something went wrong");
     }
+    setloading(false)
 } catch (error) {
   if (axios.isAxiosError(error)) {
     console.log(
@@ -80,9 +87,11 @@ const CreateRoomPopup = ({ popup, setPopup }: { popup: boolean; setPopup: (open:
       error.response?.data?.message ||
       "Request failed"
     );
+    setloading(false)
   } else {
     console.log(error);
     toast.error("Unknown error");
+    setloading(false)
   }
 }}
   return (
