@@ -17,9 +17,9 @@ export const startRoomCleanupJob = () => {
           }
         });
 
-      console.log(
-        `Deleted ${result.deletedCount} inactive rooms`
-      );
+      // console.log(
+      //   `Deleted ${result.deletedCount} inactive rooms`
+      // );
 
     } catch (error) {
       console.error(

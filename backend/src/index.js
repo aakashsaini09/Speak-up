@@ -10,9 +10,15 @@ import roomRoutes from "./routes/room.route.js";
 import { initializeSocket } from "./sockets/socket.js";
 import { startRoomCleanupJob } from "./services/cleanUpRooms.js";
 const app = express();
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://speak-up.online",
+  "https://www.speak-up.online",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -24,7 +30,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 initializeSocket(server);
 connectToDatabase();
-// startRoomCleanupJob();
+startRoomCleanupJob();
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
