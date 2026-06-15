@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import RoomCard from './RoomCard';
+import Image from 'next/image';
+import NoRoomFoundImage from '@/public/nothing.jpg'
 export const fetchRoomFunction = async (
     backendUrl: string,
     setRooms: React.Dispatch<React.SetStateAction<any[]>>
@@ -34,8 +36,12 @@ const GetRooms = () => {
     }, [])
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-zinc-950 h-screen px-32 py-12">
-                    {rooms && rooms.map((room, idx) => (
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-zinc-950 h-[80vh] ${rooms.length == 0 ? 'px-0' : 'px-32 py-12'}`}>
+                    {rooms.length == 0 ? 
+                    <section className='container w-screen h-full flex flex-col justify-center items-center'>
+                        <h1 className='font-bold text-5xl text-white'>No room available.</h1>
+                        <span className='font-medium text-2xl text-gray-200'>You can create one and invite friends.</span>
+                    </section> : rooms.map((room, idx) => (
                         // <div key={idx}>{typeof room === 'object' ? JSON.stringify(room) : String(room)}</div>
                         <div key={idx}><RoomCard room={room}/></div>
                     ))}

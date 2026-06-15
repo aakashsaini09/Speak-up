@@ -5,31 +5,13 @@ import { useUser } from "@clerk/nextjs";
 import { Send, Globe } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
 export default function WorldChat() {
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef(null);
   const [message, setMessage] = useState("");
   const [onlineCount, setOnlineCount] = useState(112);
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      name: "Developer",
-      image:
-        "https://aakashsaini.in/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fp.0dfc0k0-10x1r.png&w=640&q=75",
-      text: "Welcome to the world 👋",
-      time: "12:00",
-    },
-    //   {
-    //     id: 2,
-    //     name: "John",
-    //     image:
-    //       "https://i.pravatar.cc/100?img=2",
-    //     text: "Anyone learning English?",
-    //     time: "10:23",
-    // },
-  ])
+  const [messages, setMessages] = useState([])
   const { user } = useUser();
   useEffect(() => {
     // Scroll to the bottom element whenever messages change
@@ -117,7 +99,7 @@ export default function WorldChat() {
   // };
 
   return (
-    <div className="h-[85vh] bg-zinc-950 text-white flex justify-center p-4 pt-0">
+    <div className="h-[90vh] w-full bg-zinc-950 text-white flex justify-center p-4 pt-0">
       <div className="w-full max-w-5xl bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
 
         {/* Header */}
@@ -132,7 +114,7 @@ export default function WorldChat() {
           <div className="flex items-center gap-2 bg-zinc-800 px-3 py-1 rounded-full">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-sm">
-              {onlineCount} Online
+              {onlineCount <= 1 ? onlineCount : onlineCount - 1} Online
             </span>
           </div>
         </div>

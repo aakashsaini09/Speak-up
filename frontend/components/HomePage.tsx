@@ -1,38 +1,21 @@
-"use client"
+"use client";
 
-import { useState } from 'react';
-import Navbar from './Navbar';
-import {
-    ToggleGroup,
-    ToggleGroupItem,
-} from "@/components/ui/toggle-group"
-import GetRooms from './GetRooms';
-import WorldChat from './WorldChat';
-const HomePage = () => {
+import { useState } from "react";
+import Navbar from "./Navbar";
+import GetRooms from "./GetRooms";
+import WorldChat from "./WorldChat";
 
-    const [value, setValue] = useState<string>("rooms")
+export default function HomePage() {
+  const [value, setValue] = useState<"rooms" | "chat">("rooms");
 
-    return (
-        <div>
-            <Navbar value={value}/>
-            {value == 'rooms' ? (
-                <GetRooms/>
-                ) : (
-                    <WorldChat/>
-                )}
-                    <div className='fixed w-full flex bottom-2 justify-around'>
-                <ToggleGroup variant="default" type="single" value={value} onValueChange={(value) => { if (value) setValue(value) }} defaultValue="rooms">
-                    <ToggleGroupItem value="rooms" aria-label="Toggle all" className={`px-4 py-2 `}>
-                        Rooms
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="chat" aria-label="Toggle missed" className={`px-4 py-2`}>
-                        World-Chat
-                    </ToggleGroupItem>
-                </ToggleGroup>
-            </div>
-            
-        </div>
-    )
+  return (
+    // h-screen + flex-col so Navbar shrinks to its natural height and
+    // <main> gets exactly the remaining space — no vh math needed anywhere.
+    <div className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden">
+      <Navbar value={value} setValue={setValue} />
+      <main className="flex-1 overflow-hidden">
+        {value === "rooms" ? <GetRooms /> : <WorldChat />}
+      </main>
+    </div>
+  );
 }
-
-export default HomePage

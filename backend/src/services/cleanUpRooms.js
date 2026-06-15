@@ -6,7 +6,7 @@ export const startRoomCleanupJob = () => {
 
       const twoMinutesAgo =
         new Date(
-          Date.now() - 2 * 60 * 1000
+          Date.now() - 5 * 60 * 1000
         );
 
       const result =
@@ -27,5 +27,5 @@ export const startRoomCleanupJob = () => {
         error
       );
     }
-  }, 60 * 1000); // every 1 minute
+  }, 60 * 5000); // every 5 minute
 };
