@@ -1,102 +1,145 @@
 "use client"
 import { useRouter } from "next/navigation";
-import {User} from 'lucide-react'
+import { Users, Mic } from 'lucide-react';
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
-type RoomProps = {
-    room: {
-        _id: string;
-        title: string;
-        language: string;
-        activeParticipants: number;
-        maxUser: number;
-        creatorImg: string;
-        participantsList: {
-            id: string;
-            image: string;
-        }[];
-    };
+
+type Room = {
+    _id: string;
+    title: string;
+    language: string;
+    activeParticipants: number;
+    maxUser: number;
+    creatorImg: string;
+    participantsList: { id: string; image: string; }[];
 };
-export default function RoomCard({ room }: RoomProps) {
-    const { user } = useUser()
-    const router = useRouter()
-    const goToRoom = (id: string) => {
-           if (!id || !user?.id) {
-            // router.push('/')
-            toast.error("Please login first")
+
+// Unique but deterministic placeholder per slot
+const placeholder = (seed: string) =>
+    `https://api.dicebear.com/7.x/shapes/svg?seed=${seed}`;
+
+// Map language names to flag/emoji for a bit of personality
+const LANG_FLAGS: Record<string, string> = {
+    English: "🇬🇧", Hindi: "🇮🇳", Japanese: "🇯🇵", Tamil: "🇮🇳",
+    Telugu: "🇮🇳", Marathi: "🇮🇳", Chinese: "🇨🇳", Korean: "🇰🇷",
+    French: "🇫🇷", Italian: "🇮🇹",
+};
+
+export default function RoomCard({ room }: { room: Room }) {
+    const { user } = useUser();
+    const router = useRouter();
+
+    const isFull = room.activeParticipants >= room.maxUser;
+
+    const joinRoom = () => {
+        if (!user?.id) {
+            toast.error("Please sign in to join a room");
             return;
-        };
-        router.push(`/room/${id}`)
-    }
-    const participants = room.participantsList || [];
-    const avatarSize =
-        room.maxUser > 3
-            ? "w-22 h-22"
-            : "w-28 h-28";
+        }
+        if (isFull) {
+            toast.error("This room is full");
+            return;
+        }
+        router.push(`/room/${room._id}`);
+    };
+
+    // Decide circle size based on how many slots to display
+    const circleClass = room.maxUser > 4
+        ? "w-12 h-12"   // small — 5–6 slots
+        : room.maxUser > 3
+        ? "w-14 h-14"   // medium — 4 slots
+        : "w-16 h-16";  // large  — 1–3 slots
 
     return (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex flex-col justify-between h-80 shadow-md hover:border-zinc-700 transition-all">
+        <div className="group flex flex-col gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 hover:border-violet-800/50 hover:shadow-lg hover:shadow-violet-950/20 transition-all duration-200">
 
-            {/* Header */}
-            <div className="flex gap-3">
-                <img
-                    src={room.creatorImg ? room.creatorImg : 'https://imgs.search.brave.com/GwKK4NwXL6KxFDH7Ivikaj9TnRuJOx8urkkQDTnL48U/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWcu/bWFnbmlmaWMuY29t/L3ByZW1pdW0tcGhv/dG8vYWRvcmFibGUt/Y2FydG9vbi1naXJs/LXdpdGgtYnVuLWhh/aXJzdHlsZS1yZWQt/c2NhcmYtZmFsbC1m/b2xpYWdlLWJhY2tn/cm91bmQtcGVyZmVj/dF85MTE4NDktNjA0/MzE1LmpwZz9zZW10/PWFpc19oeWJyaWQm/dz03NDAmcT04MA'}
-                    // src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"}
-                    alt="creator"
-                    className="w-12 h-12 rounded-full object-cover border border-zinc-700"
-                />
+            {/* ── Header ────────────────────────────────────────────────────── */}
+            <div className="flex items-start gap-3">
+                <div className="flex-1 min-w-0">
+                    {/* Language badge */}
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-2.5 py-1 rounded-full bg-violet-950/60 text-violet-300 border border-violet-800/40 mb-2">
+                        <span>{LANG_FLAGS[room.language] ?? "🌐"}</span>
+                        {room.language}
+                    </span>
 
-                <div className="min-w-0">
-                    <h3 className="text-white font-semibold text-xl truncate">
+                    {/* Room title */}
+                    <h3 className="text-white font-semibold text-xl leading-snug line-clamp-2">
                         {room.title}
                     </h3>
+                </div>
 
-                    <p className="text-sm text-blue-400 flex justify-between">
-                        <span>{room.language}</span> <span className="flex justify-center items-center text-xl"><User size={20}/> {room.activeParticipants}/{room.maxUser}</span>
-                    </p>
+                {/* Creator avatar */}
+                <img
+                    src={room.creatorImg || placeholder('creator')}
+                    alt="Room creator"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700 shrink-0"
+                />
+            </div>
+
+            {/* ── Participant slots ─────────────────────────────────────────── */}
+            <div className="flex-1">
+                {/* Capacity label */}
+                <div className="flex items-center gap-1.5 mb-3">
+                    <Users size={12} className="text-zinc-600" />
+                    <span className="text-sm text-zinc-500">
+                        {room.activeParticipants} / {room.maxUser} joined
+                    </span>
+
+                    {isFull ? (
+                        <span className="ml-auto text-xs text-red-400 font-medium">Full</span>
+                    ) : (
+                        <span className="ml-auto flex items-center gap-1 text-xs text-emerald-400 font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                            Open
+                        </span>
+                    )}
+                </div>
+
+                {/* Avatar grid — always 3 columns, 2 rows for 4-6 slots */}
+                <div className={`grid grid-cols-3 gap-2 ${room.maxUser > 3 ? '' : 'justify-items-center'}`}>
+                    {Array.from({ length: room.maxUser }, (_, i) => {
+                        const isOccupied = i < room.activeParticipants;
+                        // Use real image if available, otherwise use deterministic placeholder
+                        const participantImg =
+                            room.participantsList?.[i]?.image || placeholder(`user-${room._id}-${i}`);
+
+                        return (
+                            <div key={i} className="flex justify-center">
+                                {isOccupied ? (
+                                    /* Filled slot */
+                                    <div className="relative">
+                                        <img
+                                            src={participantImg}
+                                            alt={`Participant ${i + 1}`}
+                                            className={`${circleClass} rounded-full object-cover border-2 border-violet-700/50`}
+                                        />
+                                        {/* Online indicator */}
+                                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-400 rounded-full border-2 border-zinc-900" />
+                                    </div>
+                                ) : (
+                                    /* Empty slot */
+                                    <div className={`${circleClass} rounded-full border-2 border-dashed border-zinc-700/70 flex items-center justify-center group-hover:border-zinc-600 transition-colors`}>
+                                        <Mic size={circleClass.includes('16') ? 16 : 13} className="text-zinc-700" />
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Participants Section */}
-            <div className="h-22.5 flex items-center justify-center">
-
-                {room.maxUser === 0 ? (
-                    <div className="flex gap-3">
-                    <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
-                    <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
-                    <div className="h-28 border-2 rounded-full w-28 border-dashed"></div>
-                    </div>
-                ) : (
-                <div className={`grid ${room.maxUser > 3 ? "grid-cols-3 gap-2" : "grid-cols-3 gap-3" }`} >
-                    {Array.from({ length: room.maxUser }, (_, i) => (
-                        <div key={i}>
-                            <div className={`${avatarSize} border-2 rounded-full border-dashed ${i < room.activeParticipants ? 'bg-' : ''}`}>
-                                {i < room.activeParticipants ? (
-                                    <img src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"
-                                alt="" className={`${avatarSize} rounded-full object-cover border border-zinc-700`} />
-                                ) : (<></>)}
-                            </div>
-                        </div>
-                    ))}
-                {/* {participants.map((participant) => (
-                <img
-                key={participant.id}
-                // src={participant.image}
-                src="https://imgs.search.brave.com/8P4tCTzlcakw8czgBE6L1J6BvWGO3VRhLV9apmAYxQc/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMudW5zcGxhc2gu/Y29tL3Bob3RvLTE0/OTYzNDU4NzU2NTkt/MTFmN2RkMjgyZDFk/P2ZtPWpwZyZxPTYw/Jnc9MzAwMCZhdXRv/PWZvcm1hdCZmaXQ9/Y3JvcCZpeGxpYj1y/Yi00LjEuMCZpeGlk/PU0zd3hNakEzZkRC/OE1IeHpaV0Z5WTJo/OE4zeDhiV1Z1ZkdW/dWZEQjhmREI4Zkh3/dw"
-                alt=""
-                className={`${avatarSize} rounded-full object-cover border border-zinc-700`}
-                 />
-                ))} */}
-                    </div>
-                )}
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-center">
-                <button onClick={()=> goToRoom(room._id)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-lg transition cursor-pointer">
-                    Join Room
-                </button>
-            </div>
+            {/* ── Join button ───────────────────────────────────────────────── */}
+            <button
+                onClick={joinRoom}
+                disabled={isFull}
+                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    isFull
+                        ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                        : 'bg-violet-600 hover:bg-violet-500 text-white cursor-pointer shadow-md shadow-violet-600/20'
+                }`}
+            >
+                {isFull ? 'Room Full' : 'Join Room'}
+            </button>
         </div>
     );
 }

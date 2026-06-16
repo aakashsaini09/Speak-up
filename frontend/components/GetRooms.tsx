@@ -1,52 +1,123 @@
 "use client"
 import axios from 'axios';
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import RoomCard from './RoomCard';
-import Image from 'next/image';
-import NoRoomFoundImage from '@/public/nothing.jpg'
+import { Mic2, RefreshCw } from 'lucide-react';
+
+// Exported so CreateRoom can trigger a refetch after creation
 export const fetchRoomFunction = async (
     backendUrl: string,
-    setRooms: React.Dispatch<React.SetStateAction<any[]>>
+    setRooms: React.Dispatch<React.SetStateAction<any[]>>,
+    setLoading?: (v: boolean) => void
 ) => {
+    setLoading?.(true);
     try {
         const res = await axios.get(`${backendUrl}/api/room`);
-        setRooms(res.data.rooms)
-        // console.log("room fetched: ", res.data.rooms)
         if (res.data?.success) {
+            setRooms(res.data.rooms);
         } else {
-            toast.error("Something went wrong");
+            toast.error("Something went wrong loading rooms");
         }
     } catch (error) {
         if (axios.isAxiosError(error)) {
-            console.log("Response Data:", error.response?.data);
-            console.log("Full Response:", error.response);
-            toast.error(error.response?.data?.message || "Request failed");
+            toast.error(error.response?.data?.message || "Failed to load rooms");
         } else {
-            console.log(error);
             toast.error("Unknown error");
         }
+    } finally {
+        setLoading?.(false);
     }
-}
-const GetRooms = () => {
+};
+
+export default function GetRooms() {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
-        const [rooms, setRooms] = useState<any[]>([])
-     useEffect(() => {
-        fetchRoomFunction(backendUrl, setRooms)
-    }, [])
-  return (
-    <div>
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-zinc-950 h-[80vh] ${rooms.length == 0 ? 'px-0' : 'px-32 py-12'}`}>
-                    {rooms.length == 0 ? 
-                    <section className='container w-screen h-full flex flex-col justify-center items-center'>
-                        <h1 className='font-bold text-5xl text-white'>No room available.</h1>
-                        <span className='font-medium text-2xl text-gray-200'>You can create one and invite friends.</span>
-                    </section> : rooms.map((room, idx) => (
-                        // <div key={idx}>{typeof room === 'object' ? JSON.stringify(room) : String(room)}</div>
-                        <div key={idx}><RoomCard room={room}/></div>
+    const [rooms, setRooms] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const refresh = () => fetchRoomFunction(backendUrl, setRooms, setLoading);
+
+    useEffect(() => { refresh(); }, []);
+
+    // ── Loading skeleton ──────────────────────────────────────────────────────
+    if (loading) {
+        return (
+            <div className="px-6 sm:px-10 lg:px-20 py-8">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="h-6 w-32 bg-zinc-800 rounded-lg animate-pulse" />
+                    <div className="h-7 w-20 bg-zinc-800 rounded-full animate-pulse" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 h-64 animate-pulse">
+                            <div className="flex gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-zinc-800" />
+                                <div className="flex-1">
+                                    <div className="h-3 w-16 bg-zinc-800 rounded mb-2" />
+                                    <div className="h-4 w-36 bg-zinc-800 rounded" />
+                                </div>
+                            </div>
+                            <div className="flex gap-3 justify-center mt-6">
+                                {[...Array(3)].map((_, j) => (
+                                    <div key={j} className="w-14 h-14 rounded-full bg-zinc-800" />
+                                ))}
+                            </div>
+                            <div className="h-9 bg-zinc-800 rounded-xl mt-6" />
+                        </div>
                     ))}
                 </div>
-    </div>
-  )
+            </div>
+        );
+    }
+
+    // ── Empty state ───────────────────────────────────────────────────────────
+    if (rooms.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5 text-center px-6">
+                <div className="w-20 h-20 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+                    <Mic2 size={32} className="text-zinc-600" />
+                </div>
+                <div>
+                    <h2 className="text-white text-2xl font-bold mb-1.5">No rooms yet</h2>
+                    <p className="text-zinc-500 text-sm max-w-xs">
+                        Be the first to create a room and invite others to practice
+                    </p>
+                </div>
+                <button
+                    onClick={refresh}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 text-sm font-medium transition-all cursor-pointer"
+                >
+                    <RefreshCw size={14} />
+                    Check again
+                </button>
+            </div>
+        );
+    }
+
+    // ── Room grid ─────────────────────────────────────────────────────────────
+    return (
+        <div className="px-6 sm:px-10 lg:px-20 py-8">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h2 className="text-white font-bold text-xl">Live Rooms</h2>
+                    <p className="text-zinc-500 text-sm mt-0.5">
+                        {rooms.length} room{rooms.length !== 1 ? 's' : ''} available
+                    </p>
+                </div>
+                <button
+                    onClick={refresh}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 text-xs font-medium transition-all cursor-pointer"
+                >
+                    <RefreshCw size={12} />
+                    Refresh
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {rooms.map((room, idx) => (
+                    <RoomCard key={room._id ?? idx} room={room} />
+                ))}
+            </div>
+        </div>
+    );
 }
-export default GetRooms
