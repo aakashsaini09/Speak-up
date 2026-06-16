@@ -27,131 +27,324 @@ const RTC_CONFIG: RTCConfiguration = {
     { urls: "stun:stun1.l.google.com:19302" },
   ],
 };
+// ---------------------------------------------------------------------------
+// AudioEchoManager
+// ---------------------------------------------------------------------------
+// Why this exists:
+//   Browser AEC works by comparing what the microphone captures against what
+//   the *same browser tab* is playing. When remote audio arrives via WebRTC
+//   and is played through a plain <audio> element, the browser's AEC pipeline
+//   has no reference signal, so it cannot subtract the speaker output from the
+//   mic input → acoustic echo loop.
+//
+//   The fix is to route ALL remote audio through a single shared AudioContext
+//   that was created *before* getUserMedia is called. Chromium's AEC engine
+//   uses the AudioContext output as the reference signal when the mic stream
+//   was also obtained in the same context, giving it what it needs to cancel
+//   the echo.
+//
+//   Additional layers applied per remote stream:
+//   • High-pass filter (80 Hz) — cuts low-frequency rumble / mic hum
+//   • DynamicsCompressor — prevents loud feedback spikes from clipping
+//   • Per-peer GainNode (0.85) — small attenuation reduces round-trip level
+// ---------------------------------------------------------------------------
+class AudioEchoManager {
+  private ctx: AudioContext;
+  // One graph per remote peer: source → HPF → compressor → gain → destination
+  private peerNodes = new Map<
+    string,
+    {
+      source: MediaStreamAudioSourceNode;
+      hpf: BiquadFilterNode;
+      compressor: DynamicsCompressorNode;
+      gain: GainNode;
+    }
+  >();
+   constructor() {
+    // Create the context immediately — before getUserMedia — so Chrome can
+    // wire up its internal AEC reference sink.
+    this.ctx = new AudioContext();
+  }
+ 
+  /** Returns the raw AudioContext so callers can resume() it after a gesture */
+  get context() {
+    return this.ctx;
+  }
+   /**
+   * Call getUserMedia through this method so the mic stream is tied to the
+   * same AudioContext that plays remote audio.  The returned stream is the
+   * processed mic output that should be added to RTCPeerConnections.
+   */
+  async getMicStream(constraints: MediaTrackConstraints): Promise<MediaStream> {
+    await this.ctx.resume();
+ 
+    // Get the raw mic with all browser-level processing enabled
+    const raw = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        ...constraints,
+        // These must be true so the browser's AEC/NS pipeline is active
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+      },
+    });
+      // Route through the AudioContext so AEC has a proper speaker reference
+    const micSource = this.ctx.createMediaStreamSource(raw);
+    const micDest = this.ctx.createMediaStreamDestination();
+    micSource.connect(micDest);
+ 
+    return micDest.stream;
+  }
+   /**
+   * Route a remote peer's MediaStream through the echo-cancellation graph.
+   * Must be called every time a new remote track arrives.
+   */
+  addRemoteStream(peerId: string, stream: MediaStream) {
+    // Tear down any existing graph for this peer first
+    this.removeRemoteStream(peerId);
+ 
+    const source = this.ctx.createMediaStreamSource(stream);
+ 
+    // 1. High-pass filter: remove sub-80 Hz rumble
+    const hpf = this.ctx.createBiquadFilter();
+    hpf.type = "highpass";
+    hpf.frequency.value = 80;
+    hpf.Q.value = 0.7;
+ 
+    // 2. Dynamics compressor: tame sudden loud spikes
+    const compressor = this.ctx.createDynamicsCompressor();
+    compressor.threshold.value = -24; // dB — start compressing here
+    compressor.knee.value = 10;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.15;
+ 
+    // 3. Gain: slight attenuation to reduce round-trip energy
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.85;
+ 
+    // Wire up: source → HPF → compressor → gain → speakers
+    source.connect(hpf);
+    hpf.connect(compressor);
+    compressor.connect(gain);
+    gain.connect(this.ctx.destination);
+ 
+    this.peerNodes.set(peerId, { source, hpf, compressor, gain });
+  }
+ 
+  removeRemoteStream(peerId: string) {
+    const nodes = this.peerNodes.get(peerId);
+    if (!nodes) return;
+    try {
+      nodes.source.disconnect();
+      nodes.hpf.disconnect();
+      nodes.compressor.disconnect();
+      nodes.gain.disconnect();
+    } catch {
+      // disconnect throws if already disconnected — safe to ignore
+    }
+    this.peerNodes.delete(peerId);
+  }
+   
+  destroy() {
+    this.peerNodes.forEach((_, id) => this.removeRemoteStream(id));
+    this.ctx.close();
+  }
+}
+ 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function RoomPage() {
-  const router = useRouter();
+   const router = useRouter();
   const { user } = useUser();
   const { id: roomId } = useParams();
-
+ 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [userCount, setUserCount] = useState(0);
   const [micEnabled, setMicEnabled] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);        // ← new: chat overlay toggle
-
-  // ── WebRTC refs ─────────────────────────────────────────────────────────────
+  const [chatOpen, setChatOpen] = useState(false);
+ 
+  // ── WebRTC refs ─────────────────────────────────────────────────────────
   const peerConnections = useRef(new Map<string, RTCPeerConnection>());
   const localStream = useRef<MediaStream | null>(null);
-  const remoteAudios = useRef(new Map<string, HTMLAudioElement>());
   const iceCandidateBuffers = useRef(new Map<string, RTCIceCandidate[]>());
-
-  // ─── WebRTC helpers ───────────────────────────────────────────────────────
-
-  const createPeerConnection = useCallback((userId: string): RTCPeerConnection => {
-    peerConnections.current.get(userId)?.close();
-    const pc = new RTCPeerConnection(RTC_CONFIG);
-
-    localStream.current?.getAudioTracks().forEach(track => {
-      pc.addTrack(track, localStream.current!);
-    });
-
-    pc.ontrack = (event) => {
-      let audio = remoteAudios.current.get(userId);
-      if (!audio) {
-        audio = document.createElement("audio");
-        audio.autoplay = true;
-        document.body.appendChild(audio);
-        remoteAudios.current.set(userId, audio);
+ 
+  // ── Echo manager (replaces the old remoteAudios Map) ────────────────────
+  // A single instance lives for the lifetime of the room.
+  const echoManager = useRef<AudioEchoManager | null>(null);
+ 
+  // ─── WebRTC helpers ─────────────────────────────────────────────────────
+ 
+  const createPeerConnection = useCallback(
+    (userId: string): RTCPeerConnection => {
+      peerConnections.current.get(userId)?.close();
+      const pc = new RTCPeerConnection(RTC_CONFIG);
+ 
+      // Add local tracks (mic) when available
+      localStream.current?.getAudioTracks().forEach((track) => {
+        pc.addTrack(track, localStream.current!);
+      });
+ 
+      pc.ontrack = (event) => {
+        // Route the remote stream through the Web Audio echo-cancel graph
+        // instead of a plain <audio> element.
+        echoManager.current?.addRemoteStream(userId, event.streams[0]);
+      };
+ 
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit("ice-candidate", {
+            targetUserId: userId,
+            candidate: event.candidate,
+          });
+        }
+      };
+ 
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "failed") pc.restartIce();
+        // Clean up audio graph when peer disconnects
+        if (
+          pc.connectionState === "disconnected" ||
+          pc.connectionState === "closed"
+        ) {
+          echoManager.current?.removeRemoteStream(userId);
+        }
+      };
+ 
+      peerConnections.current.set(userId, pc);
+      return pc;
+    },
+    []
+  );
+ 
+  const drainIceCandidates = useCallback(
+    async (userId: string, pc: RTCPeerConnection) => {
+      const buffered = iceCandidateBuffers.current.get(userId) ?? [];
+      for (const candidate of buffered) {
+        try {
+          await pc.addIceCandidate(candidate);
+        } catch (err) {
+          console.warn("[ICE] buffered candidate failed:", err);
+        }
       }
-      audio.srcObject = event.streams[0];
-    };
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        socket.emit("ice-candidate", { targetUserId: userId, candidate: event.candidate });
-      }
-    };
-
-    pc.onconnectionstatechange = () => {
-      if (pc.connectionState === "failed") pc.restartIce();
-    };
-
-    peerConnections.current.set(userId, pc);
-    return pc;
-  }, []);
-
-  const drainIceCandidates = useCallback(async (userId: string, pc: RTCPeerConnection) => {
-    const buffered = iceCandidateBuffers.current.get(userId) ?? [];
-    for (const candidate of buffered) {
-      try { await pc.addIceCandidate(candidate); }
-      catch (err) { console.warn("[ICE] buffered candidate failed:", err); }
-    }
-    iceCandidateBuffers.current.delete(userId);
-  }, []);
-
+      iceCandidateBuffers.current.delete(userId);
+    },
+    []
+  );
+ 
   const cleanupAll = useCallback(() => {
-    peerConnections.current.forEach(pc => pc.close());
+    peerConnections.current.forEach((pc) => pc.close());
     peerConnections.current.clear();
-    remoteAudios.current.forEach(audio => { audio.srcObject = null; audio.remove(); });
-    remoteAudios.current.clear();
     iceCandidateBuffers.current.clear();
+    // Tear down all audio graphs
+    echoManager.current?.destroy();
+    echoManager.current = null;
   }, []);
-
-  // ─── Socket + media setup ─────────────────────────────────────────────────
-
+ 
+  // ─── Socket + media setup ────────────────────────────────────────────────
+ 
   useEffect(() => {
     if (!user?.id) return;
-
-    const joinData = { roomId, userId: user.id, name: user.firstName, imageUrl: user.imageUrl };
+ 
+    // Instantiate the echo manager once, before getUserMedia
+    echoManager.current = new AudioEchoManager();
+ 
+    const joinData = {
+      roomId,
+      userId: user.id,
+      name: user.firstName,
+      imageUrl: user.imageUrl,
+    };
+ 
     const handleCount = (count: number) => setUserCount(count);
-    const handleParticipants = (data: Participant[]) => setParticipants(data);
-
+    const handleParticipants = (data: Participant[]) =>
+      setParticipants(data);
+ 
     socket.on("participants-count", handleCount);
     socket.on("participants-update", handleParticipants);
-
-    socket.on("existing-participants", async (existing: Participant[]) => {
-      for (const p of existing.filter(p => p.userId !== user.id)) {
-        if (peerConnections.current.has(p.userId)) continue;
-        const pc = createPeerConnection(p.userId);
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit("webrtc-offer", { targetUserId: p.userId, sdp: pc.localDescription });
+ 
+    socket.on(
+      "existing-participants",
+      async (existing: Participant[]) => {
+        for (const p of existing.filter((p) => p.userId !== user.id)) {
+          if (peerConnections.current.has(p.userId)) continue;
+          const pc = createPeerConnection(p.userId);
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit("webrtc-offer", {
+            targetUserId: p.userId,
+            sdp: pc.localDescription,
+          });
+        }
       }
-    });
-
-    socket.on("webrtc-offer", async (data: { senderUserId: string; sdp: RTCSessionDescriptionInit }) => {
-      const pc = createPeerConnection(data.senderUserId);
-      await pc.setRemoteDescription(data.sdp);
-      await drainIceCandidates(data.senderUserId, pc);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit("webrtc-answer", { targetUserId: data.senderUserId, sdp: pc.localDescription });
-    });
-
-    socket.on("webrtc-answer", async (data: { senderUserId: string; sdp: RTCSessionDescriptionInit }) => {
-      const pc = peerConnections.current.get(data.senderUserId);
-      if (!pc || pc.signalingState !== "have-local-offer") return;
-      await pc.setRemoteDescription(data.sdp);
-      await drainIceCandidates(data.senderUserId, pc);
-    });
-
-    socket.on("ice-candidate", async (data: { senderUserId: string; candidate: RTCIceCandidateInit }) => {
-      const pc = peerConnections.current.get(data.senderUserId);
-      if (!pc?.remoteDescription) {
-        const buf = iceCandidateBuffers.current.get(data.senderUserId) ?? [];
-        buf.push(data.candidate as RTCIceCandidate);
-        iceCandidateBuffers.current.set(data.senderUserId, buf);
-        return;
+    );
+ 
+    socket.on(
+      "webrtc-offer",
+      async (data: {
+        senderUserId: string;
+        sdp: RTCSessionDescriptionInit;
+      }) => {
+        const pc = createPeerConnection(data.senderUserId);
+        await pc.setRemoteDescription(data.sdp);
+        await drainIceCandidates(data.senderUserId, pc);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit("webrtc-answer", {
+          targetUserId: data.senderUserId,
+          sdp: pc.localDescription,
+        });
       }
-      try { await pc.addIceCandidate(data.candidate); }
-      catch (err) { console.warn("[ICE] addIceCandidate failed:", err); }
-    });
-
+    );
+ 
+    socket.on(
+      "webrtc-answer",
+      async (data: {
+        senderUserId: string;
+        sdp: RTCSessionDescriptionInit;
+      }) => {
+        const pc = peerConnections.current.get(data.senderUserId);
+        if (!pc || pc.signalingState !== "have-local-offer") return;
+        await pc.setRemoteDescription(data.sdp);
+        await drainIceCandidates(data.senderUserId, pc);
+      }
+    );
+ 
+    socket.on(
+      "ice-candidate",
+      async (data: {
+        senderUserId: string;
+        candidate: RTCIceCandidateInit;
+      }) => {
+        const pc = peerConnections.current.get(data.senderUserId);
+        if (!pc?.remoteDescription) {
+          const buf =
+            iceCandidateBuffers.current.get(data.senderUserId) ?? [];
+          buf.push(data.candidate as RTCIceCandidate);
+          iceCandidateBuffers.current.set(data.senderUserId, buf);
+          return;
+        }
+        try {
+          await pc.addIceCandidate(data.candidate);
+        } catch (err) {
+          console.warn("[ICE] addIceCandidate failed:", err);
+        }
+      }
+    );
+ 
+    // Acquire mic through the echo manager so AEC has the right reference
     (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await echoManager.current!.getMicStream({
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+        });
+        // Start muted — user must explicitly enable mic
         stream.getAudioTracks()[0].enabled = false;
         localStream.current = stream;
         socket.emit("join-room", joinData);
@@ -159,10 +352,10 @@ export default function RoomPage() {
         console.error("[Media] Microphone access denied:", err);
       }
     })();
-
+ 
     return () => {
       cleanupAll();
-      localStream.current?.getTracks().forEach(t => t.stop());
+      localStream.current?.getTracks().forEach((t) => t.stop());
       localStream.current = null;
       socket.off("participants-count", handleCount);
       socket.off("participants-update", handleParticipants);
@@ -173,19 +366,19 @@ export default function RoomPage() {
       socket.off("room-message");
     };
   }, [roomId, user?.id, createPeerConnection, drainIceCandidates, cleanupAll]);
-
-  // ─── Controls ─────────────────────────────────────────────────────────────
-
+ 
+  // ─── Controls ────────────────────────────────────────────────────────────
+ 
   const toggleMic = () => {
     const track = localStream.current?.getAudioTracks()[0];
     if (!track) return;
     track.enabled = !track.enabled;
     setMicEnabled(track.enabled);
   };
-
+ 
   const leaveRoom = () => {
     cleanupAll();
-    localStream.current?.getTracks().forEach(t => t.stop());
+    localStream.current?.getTracks().forEach((t) => t.stop());
     localStream.current = null;
     socket.emit("leave-room");
     router.push("/");
