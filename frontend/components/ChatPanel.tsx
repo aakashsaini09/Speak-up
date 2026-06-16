@@ -133,7 +133,7 @@ export default function ChatPanel() {
       </div>
 
       {/* Input — always pinned to the bottom because it's after the flex-1 sibling */}
-      <div className="p-3 border-t border-zinc-800 shrink-0">
+      <div className="p-3 border-t border-zinc-800 shrink-0 bottom-0">
         <div className="flex gap-2">
           <input
             ref={inputRef}

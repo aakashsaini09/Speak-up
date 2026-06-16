@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
 import { activeRooms, worldChatUsers } from "./activeRooms.js";
 import Room from "../models/room.model.js";
-import { updateUserCount } from "./updateInDB.js";
+import { saveWorldChatMsg, updateUserCount } from "./updateInDB.js";
 let io;
 let senderSocket;
 let receiverSocket;
@@ -125,9 +125,10 @@ socket.on("world-chat-leave", () => {
     }
   }
 );
-  socket.on("world-chat-message", data => {
+  socket.on("world-chat-message", async(data) => {
     // console.log("Data in server side: ", data)
     io.emit("world-chat-message", data)
+    await saveWorldChatMsg(data)
   });
   socket.on("disconnect", async () => {
   const roomId = socket.roomId;

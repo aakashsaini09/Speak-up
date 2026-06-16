@@ -9,6 +9,7 @@ import router from "./routes/user.route.js";
 import roomRoutes from "./routes/room.route.js";
 import { initializeSocket } from "./sockets/socket.js";
 import { startRoomCleanupJob } from "./services/cleanUpRooms.js";
+import messageRouter from "./routes/message.route.js";
 const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
@@ -25,6 +26,7 @@ app.use(
 app.use("/api/clerk", router);
 app.use(express.json());
 app.use("/api/room", roomRoutes);
+app.use("/api/messages", messageRouter);
 const server = http.createServer(app);
 
 // Initialize Socket.IO
