@@ -1,21 +1,15 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Open_Sans } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'sonner'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const Open_Sansfont = Open_Sans({
   subsets: ['latin'],
 })
 
 export const metadata: Metadata = {
-  title: 'Speak-UP',
+  title: 'SpeakUP',
   description: 'Practice Languages Through Real Conversations',
 }
 
@@ -26,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className='dark'>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black`}>
+      <body className={`${Open_Sansfont.className} antialiased bg-black`}>
         <ClerkProvider>
           {children}
           <Toaster/>

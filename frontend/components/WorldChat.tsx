@@ -166,7 +166,7 @@ export default function WorldChat() {
       <div className="w-full max-w-5xl bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
 
         {/* Header */}
-        <div className="flex items-center justify-between sm:px-4 md:px-6 py-4 border-b border-zinc-800">
+        <div className="shrink-0 flex items-center justify-between sm:px-4 md:px-6 py-4 border-b border-zinc-800">
           <div className="flex items-center gap-3">
             <Globe size={24} />
             <h1 className="text-xl font-semibold">
@@ -204,16 +204,38 @@ export default function WorldChat() {
                         {msg.time}
                       </span>
                     </div>
-                    <div className={`group relative mt-1 px-4 py-2 rounded-2xl inline-block wrap-break-words max-w-100 ${
-                        isOwnMessage ? "bg-indigo-600 text-white" : "bg-zinc-800"
-                      }`}>
-                      <span className="pr-4"> {msg.text}</span>
-                      {/* {isOwnMessage && (
-                        <button onClick={() => deleteMessage(msg.id)} className="absolute top-3.5 cursor-pointer right-2 opacity-0 group-hover:opacity-100 transition">
-                          <Trash2 size={14} />
-                        </button>
-                      )} */}
-                    </div>
+                    <div
+  className={`
+    group flex items-center gap-2
+    ${isOwnMessage ? "justify-end" : ""}
+  `}
+>
+  {isOwnMessage && (
+    <button
+      onClick={() => deleteMessage(msg._id)}
+      className="
+        opacity-0
+        group-hover:opacity-100
+        transition
+        text-zinc-400
+        hover:text-red-500
+      "
+    >
+      <Trash2 size={14} />
+    </button>
+  )}
+
+  <div
+    className={`
+      px-4 py-2 rounded-2xl
+      ${isOwnMessage
+        ? "bg-indigo-600"
+        : "bg-zinc-800"}
+    `}
+  >
+    {msg.text}
+  </div>
+</div>
                   </div>
                 </div>
               </div>
@@ -222,7 +244,7 @@ export default function WorldChat() {
           <div ref={messagesEndRef} />
         </div>
         {/* Input */}
-        <div className="border-t border-zinc-800 p-4">
+        <div className="shrink-0 border-t border-zinc-800 p-4">
           <div className="flex gap-3">
             <input
               value={message}
@@ -237,7 +259,7 @@ export default function WorldChat() {
               placeholder="Say hello to the world..."
               className="flex-1 bg-zinc-800 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500"
             />
-            <button ref={buttonRef} onClick={sendMessage} className="bg-indigo-600 hover:bg-indigo-500 px-5 rounded-xl transition">
+            <button ref={buttonRef} onClick={sendMessage} className="bg-indigo-600 cursor-pointer hover:bg-indigo-500 px-5 rounded-xl transition">
               <Send size={20} />
             </button>
           </div>

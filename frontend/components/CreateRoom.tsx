@@ -83,7 +83,7 @@ export default function CreateRoomPopup({ popup, setPopup }: Props) {
 
     return (
         <Dialog open={popup} onOpenChange={setPopup}>
-            <DialogContent className="sm:max-w-md bg-zinc-900 border border-zinc-800 text-white p-0 gap-0 overflow-hidden">
+            <DialogContent className="sm:max-w-md pb-5 bg-transparent border border-zinc-800 text-white p-0 gap-0 overflow-hidden">
 
                 {/* Header */}
                 <DialogHeader className="px-6 pt-6 pb-4 border-b border-zinc-800/80">
@@ -110,9 +110,9 @@ export default function CreateRoomPopup({ popup, setPopup }: Props) {
                             id="title"
                             value={roomData.title}
                             onChange={e => setRoomData(prev => ({ ...prev, title: e.target.value }))}
-                            placeholder="e.g. English speaking for beginners"
+                            placeholder="E.g. Talk about movies and Series"
                             maxLength={80}
-                            className="w-full bg-zinc-800/80 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-transparent transition-all"
+                            className="w-full bg-zinc-800/80 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-md text-white placeholder-zinc-500 placeholder:text-md outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-transparent transition-all"
                         />
                         <span className="text-xs text-zinc-600 text-right">{roomData.title.length}/80</span>
                     </div>
@@ -164,9 +164,9 @@ export default function CreateRoomPopup({ popup, setPopup }: Props) {
                                         maxUser: isNaN(val) ? 3 : Math.min(6, Math.max(1, val)),
                                     }));
                                 }}
-                                className="w-full bg-zinc-800/80 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-transparent transition-all h-10"
+                                className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full bg-zinc-800/80 border border-zinc-700/60 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-transparent transition-all h-10"
                             />
-                            <span className="text-xs text-zinc-600">1 – 6 people</span>
+                            <span className="text-xs text-zinc-300">1 – 6 people</span>
                         </div>
                     </div>
                 </div>
@@ -176,7 +176,7 @@ export default function CreateRoomPopup({ popup, setPopup }: Props) {
                     <DialogClose asChild>
                         <Button
                             variant="outline"
-                            className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-xl cursor-pointer bg-transparent"
+                            className="flex-1 py-4 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-xl cursor-pointer bg-transparent"
                         >
                             Cancel
                         </Button>
@@ -184,14 +184,13 @@ export default function CreateRoomPopup({ popup, setPopup }: Props) {
                     <Button
                         onClick={createRoom}
                         disabled={loading}
-                        className="flex-1 bg-violet-600 hover:bg-violet-500 text-white rounded-xl cursor-pointer"
+                        className="flex-1 bg-violet-600 hover:bg-violet-500 text-white rounded-xl py-4 cursor-pointer"
                     >
                         {loading ? (
                             <span className="flex items-center gap-2">
                                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                 Creating…
-                            </span>
-                        ) : 'Create Room'}
+                            </span> ) : 'Create Room'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

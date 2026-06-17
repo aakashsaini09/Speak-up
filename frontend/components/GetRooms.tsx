@@ -78,10 +78,15 @@ export default function GetRooms() {
                     <Mic2 size={32} className="text-zinc-600" />
                 </div>
                 <div>
-                    <h2 className="text-white text-2xl font-bold mb-1.5">No rooms yet</h2>
-                    <p className="text-zinc-500 text-sm max-w-xs">
-                        Be the first to create a room and invite others to practice
+                    <h2 className="text-white text-2xl font-bold mb-1.5">
+                        No rooms yet
+                    </h2>
+                    <p className="text-zinc-500 text-sm max-w-md flex">
+                        Be the first to create a room and invite others to practice.
                     </p>
+                    <div className="mt-4 inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-400">
+                        💡 Empty rooms are automatically removed after 2 minutes of inactivity.
+                    </div>
                 </div>
                 <button
                     onClick={refresh}

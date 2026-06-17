@@ -11,9 +11,12 @@ export default function HomePage() {
   return (
     // h-screen + flex-col so Navbar shrinks to its natural height and
     // <main> gets exactly the remaining space — no vh math needed anywhere.
-    <div className="h-screen flex flex-col bg-zinc-950 text-white overflow-hidden">
+    <div className="h-screen flex flex-col bg-zinc-950 text-white">
       <Navbar value={value} setValue={setValue} />
-      <main className="flex-1 overflow-hidden">
+      {value == 'rooms' && <section className="min-h-[25vh] w-full flex justify-center items-center font-semibold text-3xl">
+  Find Your Voice. Speak Up.
+</section>}
+      <main className="flex-1">
         {value === "rooms" ? <GetRooms /> : <WorldChat />}
       </main>
     </div>

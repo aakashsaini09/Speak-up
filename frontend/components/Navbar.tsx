@@ -78,7 +78,7 @@ export default function Navbar({ value, setValue }: NavbarProps) {
                   {value === "rooms" && (
                     <button
                       onClick={() => setPopup(true)}
-                      className="flex items-center gap-1.5 bg-[#7254e9] hover:bg-[#6245d4] text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+                      className="flex items-center cursor-pointer gap-1.5 bg-[#7254e9] hover:bg-[#6245d4] text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
                     >
                       <Plus size={15} />
                       {/* Label hidden on very small screens */}
@@ -133,7 +133,7 @@ function NavTab({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+      className={`flex items-center cursor-pointer gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
         active
           ? "bg-[#7254e9] text-white shadow-sm"
           : "text-zinc-400 hover:text-white hover:bg-zinc-800"
