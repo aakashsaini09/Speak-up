@@ -208,7 +208,7 @@ https://speak-up.online
 **Aakash Saini**
 
 * Portfolio: https://aakashsaini.in
-* LinkedIn: https://linkedin.com/in/aakashsaini09
+* LinkedIn: https://www.linkedin.com/in/-aakashsaini/
 * GitHub: https://github.com/aakashsaini09
 
 ---
