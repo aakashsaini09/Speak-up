@@ -1,4 +1,3 @@
-md
 <br />
 <div align="center">
 
@@ -27,8 +26,6 @@ md
 <p align="center">
   <img src="./frontend//public/screenshot.png" alt="Home Page" width="800">
 </p>
-
-> Replace the image path with your screenshots.
 
 ---
 
@@ -211,7 +208,7 @@ https://speak-up.online
 **Aakash Saini**
 
 * Portfolio: https://aakashsaini.in
-* LinkedIn: https://linkedin.com/in/aakashsaini09
+* LinkedIn: https://www.linkedin.com/in/-aakashsaini/
 * GitHub: https://github.com/aakashsaini09
 
 ---
