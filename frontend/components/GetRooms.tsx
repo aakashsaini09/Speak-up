@@ -30,12 +30,12 @@ export const fetchRoomFunction = async (
     }
 };
 
-export default function GetRooms() {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
-    const [rooms, setRooms] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
+export default function GetRooms({rooms, loading, refresh}) {
+    // const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+    // const [rooms, setRooms] = useState<any[]>(initialRooms ?? []);
+    // const [loading, setLoading] = useState(initialLoading ?? true);
 
-    const refresh = () => fetchRoomFunction(backendUrl, setRooms, setLoading);
+    // const refresh = () => fetchRoomFunction(backendUrl, setRooms, setLoading);
 
     useEffect(() => { refresh(); }, []);
 
@@ -119,7 +119,7 @@ export default function GetRooms() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {rooms.map((room, idx) => (
+                {rooms.slice(0).reverse().map((room, idx) => (
                     <RoomCard key={room._id ?? idx} room={room} />
                 ))}
             </div>

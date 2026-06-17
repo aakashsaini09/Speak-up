@@ -8,9 +8,10 @@ import { Globe, MessageSquare, Plus } from "lucide-react";
 type NavbarProps = {
   value: "rooms" | "chat";
   setValue: (v: "rooms" | "chat") => void;
+  refreshRooms?: () => void;
 };
 
-export default function Navbar({ value, setValue }: NavbarProps) {
+export default function Navbar({ value, setValue, refreshRooms }: NavbarProps) {
   const [popup, setPopup] = useState(false);
   const { isSignedIn } = useUser();
 
@@ -27,7 +28,7 @@ export default function Navbar({ value, setValue }: NavbarProps) {
               <div className="w-8 h-8 rounded-lg bg-[#7254e9] flex items-center justify-center">
                 <Globe size={16} className="text-white" />
               </div>
-              <span className="font-bold text-lg text-white tracking-tight">
+              <span className="font-bold text-xl text-white tracking-tight">
                 Speak<span className="text-[#7254e9]">Up</span>
               </span>
             </a>
@@ -112,7 +113,7 @@ export default function Navbar({ value, setValue }: NavbarProps) {
         </div>
       </header>
 
-      {popup && <CreateRoomPopup popup={popup} setPopup={setPopup} />}
+      {popup && <CreateRoomPopup popup={popup} setPopup={setPopup} refetchRooms={refreshRooms} />}
     </>
   );
 }

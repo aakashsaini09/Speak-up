@@ -20,7 +20,6 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { getToken } from "@clerk/nextjs";
-import { fetchRoomFunction } from "./GetRooms";
 import { Mic, Users } from "lucide-react";
 
 const LANGUAGES = [
@@ -37,9 +36,10 @@ interface RoomData {
 interface Props {
     popup: boolean;
     setPopup: (open: boolean) => void;
+    refetchRooms: () => void;
 }
 
-export default function CreateRoomPopup({ popup, setPopup }: Props) {
+export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props) {
     const [roomData, setRoomData] = useState<RoomData>({
         title: "",
         language: "English",
@@ -63,7 +63,8 @@ export default function CreateRoomPopup({ popup, setPopup }: Props) {
             );
             if (res.data?.success) {
                 toast.success("Room created!");
-                fetchRoomFunction(backendUrl, () => {});
+                // fetchRoomFunction(backendUrl, () => {});
+                refetchRooms()
                 setPopup(false);
                 // Reset form
                 setRoomData({ title: "", language: "English", maxUser: 3 });
