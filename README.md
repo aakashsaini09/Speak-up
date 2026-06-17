@@ -1,4 +1,3 @@
-md
 <br />
 <div align="center">
 
@@ -27,8 +26,6 @@ md
 <p align="center">
   <img src="./frontend//public/screenshot.png" alt="Home Page" width="800">
 </p>
-
-> Replace the image path with your screenshots.
 
 ---
 
