@@ -125,40 +125,33 @@ socket.on("world-chat-leave", () => {
     }
   }
 );
-  socket.on("world-chat-message", async(data) => {
+socket.on("world-chat-message", async(data) => {
     // console.log("Data in server side: ", data)
     io.emit("world-chat-message", data)
     await saveWorldChatMsg(data)
-  });
-  socket.on("disconnect", async () => {
+});
+socket.on("disconnect", async () => {
   const roomId = socket.roomId;
   const userId = socket.userId;
+
+  // ── Room cleanup (unchanged) ──────────────────────────────────────────────
   if (roomId && activeRooms.has(roomId)) {
-    activeRooms
-      .get(roomId)
-      .participants
-      .delete(userId);
-    const count =
-      activeRooms.get(roomId).participants.size;
-      // if ( activeRooms.get(roomId).participants.size === 0) {
-      //   activeRooms.delete(roomId);
-      // }
+    activeRooms.get(roomId).participants.delete(userId);
+    const count = activeRooms.get(roomId).participants.size;
     await updateUserCount(count, roomId);
-    const participants =
-      Array.from(
-        activeRooms
-          .get(roomId)
-          .participants
-          .values()
-      );
-    io.to(roomId).emit(
-      "participants-count",
-      count
+    const participants = Array.from(
+      activeRooms.get(roomId).participants.values()
     );
-    io.to(roomId).emit(
-      "participants-update",
-      participants
-    );
+    io.to(roomId).emit("participants-count", count);
+    io.to(roomId).emit("participants-update", participants);
+  }
+
+  // ── World chat cleanup — THIS WAS MISSING ────────────────────────────────
+  // The world-chat-leave event only fires on graceful navigation.
+  // Tab close / crash only triggers disconnect, so we must clean up here too.
+  if (userId && worldChatUsers.has(userId)) {
+    worldChatUsers.delete(userId);
+    io.emit("world-chat-count", worldChatUsers.size);
   }
 });
 
