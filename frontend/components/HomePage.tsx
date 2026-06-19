@@ -24,7 +24,7 @@ export default function HomePage() {
     // <main> gets exactly the remaining space — no vh math needed anywhere.
     <div className="h-screen flex flex-col bg-zinc-950 text-white">
       <Navbar value={value} setValue={setValue} refreshRooms={refreshRooms} />
-      {value == 'rooms' && <section className="min-h-[25vh] w-full flex justify-center items-center font-semibold text-3xl">
+      {value == 'rooms' && <section className="sm:min-h-[18vh] md:min-h-[17vh] w-full flex py-3 justify-center items-center font-semibold sm:text-2xl md:text-3xl">
   Find Your Voice. Speak Up.
 </section>}
       <main className="flex-1">

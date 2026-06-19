@@ -90,7 +90,7 @@ export default function GetRooms({rooms, loading, refresh}) {
                 </div>
                 <button
                     onClick={refresh}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 text-sm font-medium transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-blue-800 text-sm font-medium transition-all cursor-pointer"
                 >
                     <RefreshCw size={14} />
                     Check again
