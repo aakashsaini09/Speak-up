@@ -28,14 +28,6 @@ export default function WorldChat() {
   //     text: "Hello everyone 👋",
   //     time: "10:22",
   //   },
-  //   {
-  //     id: 2,
-  //     name: "John",
-  //     image:
-  //       "https://i.pravatar.cc/100?img=2",
-  //     text: "Anyone learning English?",
-  //     time: "10:23",
-  //   },
   // ];
   useEffect(() => {
     if (!user) return;
