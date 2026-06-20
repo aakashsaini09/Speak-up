@@ -28,14 +28,6 @@ export default function WorldChat() {
   //     text: "Hello everyone 👋",
   //     time: "10:22",
   //   },
-  //   {
-  //     id: 2,
-  //     name: "John",
-  //     image:
-  //       "https://i.pravatar.cc/100?img=2",
-  //     text: "Anyone learning English?",
-  //     time: "10:23",
-  //   },
   // ];
   useEffect(() => {
     if (!user) return;
@@ -163,10 +155,10 @@ export default function WorldChat() {
   }
   return (
     <div className="sm:h-[82vh] md:h-[90vh] w-full bg-zinc-950 text-white flex justify-center p-4 pt-0">
-      <div className="w-full max-w-5xl bg-zinc-900 border border-zinc-800 rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+      <div className="w-full max-w-full sm:px-4 md:px-9 bg-zinc-900 border border-zinc-800 rounded-md flex flex-col overflow-hidden shadow-2xl">
 
         {/* Header */}
-        <div className="shrink-0 flex items-center justify-between sm:px-4 md:px-6 py-4 border-b border-zinc-800">
+        <div className="shrink-0 flex items-center px-4 justify-between sm:px-4 md:px-6 py-4 border-b border-zinc-800">
           <div className="flex items-center gap-3">
             <Globe size={24} />
             <h1 className="text-xl font-semibold">
@@ -183,7 +175,6 @@ export default function WorldChat() {
         </div>
         {/* Messages */}
         <div className="flex-1 overflow-y-auto scrollbar scrollbar-thumb-indigo-600 scrollbar-track-transparent p-6 space-y-4">
-
           {messages.map((msg, index) => {
             const isOwnMessage = String(msg.id) == user?.id;
             return (
@@ -192,8 +183,8 @@ export default function WorldChat() {
                   ? "justify-end"
                   : "justify-start"
                   }`}>
-                <div className={`flex items-center gap-3 max-w-[75%] ${isOwnMessage ? "flex-row-reverse" : ""}`}  >
-                  <img src={msg.image} alt="" className="w-14 h-14 flex rounded-full object-cover shrink-0" />
+                <div className={`flex items-center gap-1 max-w-[75%] ${isOwnMessage ? "flex-row-reverse" : ""}`}  >
+                  <img src={msg.image} alt="" className="w-11 h-11 flex rounded-full object-cover shrink-0" />
                   <div className={`${isOwnMessage ? "text-right" : ""}`} >
                     <div className={`flex items-center gap-2 ${isOwnMessage ? "justify-end" : ""}`} >
                       <span className="font-medium">
@@ -227,7 +218,7 @@ export default function WorldChat() {
 
   <div
     className={`
-      px-4 py-2 rounded-2xl
+      px-4 py-2 rounded-2xl text-left
       ${isOwnMessage
         ? "bg-indigo-600"
         : "bg-zinc-800"}

@@ -133,8 +133,6 @@ socket.on("world-chat-message", async(data) => {
 socket.on("disconnect", async () => {
   const roomId = socket.roomId;
   const userId = socket.userId;
-
-  // ── Room cleanup (unchanged) ──────────────────────────────────────────────
   if (roomId && activeRooms.has(roomId)) {
     activeRooms.get(roomId).participants.delete(userId);
     const count = activeRooms.get(roomId).participants.size;
@@ -146,9 +144,8 @@ socket.on("disconnect", async () => {
     io.to(roomId).emit("participants-update", participants);
   }
 
-  // ── World chat cleanup — THIS WAS MISSING ────────────────────────────────
   // The world-chat-leave event only fires on graceful navigation.
-  // Tab close / crash only triggers disconnect, so we must clean up here too.
+  // Tab close / crash only triggers disconnect, so cleaning up here req.
   if (userId && worldChatUsers.has(userId)) {
     worldChatUsers.delete(userId);
     io.emit("world-chat-count", worldChatUsers.size);
