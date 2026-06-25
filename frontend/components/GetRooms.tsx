@@ -74,8 +74,8 @@ export default function GetRooms({rooms, loading, refresh}) {
     if (rooms.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-5 text-center px-6">
-                <div className="w-20 h-20 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-                    <Mic2 size={32} className="text-zinc-600" />
+                <div className="group w-20 h-20 rounded-2xl bg-transparent border border-zinc-800 hover:border-zinc-600 flex items-center justify-center">
+                    <Mic2 size={32} className="text-zinc-600 group-hover:text-zinc-400" />
                 </div>
                 <div>
                     <h2 className="text-white text-2xl font-bold mb-1.5">
@@ -102,7 +102,7 @@ export default function GetRooms({rooms, loading, refresh}) {
     // ── Room grid ─────────────────────────────────────────────────────────────
     return (
         <div className="px-6 sm:px-10 lg:px-20 py-8">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 md:px-20">
                 <div>
                     <h2 className="text-white font-bold text-xl">Live Rooms</h2>
                     <p className="text-zinc-500 text-sm mt-0.5">
@@ -118,7 +118,7 @@ export default function GetRooms({rooms, loading, refresh}) {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:px-20">
                 {rooms.slice(0).reverse().map((room, idx) => (
                     <RoomCard key={room._id ?? idx} room={room} />
                 ))}
