@@ -1,6 +1,6 @@
 "use client"
 import { useRouter } from "next/navigation";
-import { Users, Mic } from 'lucide-react';
+import { Users, Mic, Phone } from 'lucide-react';
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
@@ -51,19 +51,19 @@ export default function RoomCard({ room }: { room: Room }) {
         : "w-16 h-16";  // large  — 1–3 slots
 
     return (
-        <div className="group flex flex-col gap-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-5 hover:border-violet-800/50 hover:shadow-lg hover:shadow-violet-950/20 transition-all duration-200">
+        <div className="group flex flex-col gap-4 w-sm bg-zinc-900 border border-zinc-800 rounded-2xl p-5 hover:border-violet-800/50 hover:shadow-lg hover:shadow-violet-950/20 transition-all duration-200">
 
             {/* ── Header ────────────────────────────────────────────────────── */}
             <div className="flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                     {/* Language badge */}
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold px-2.5 py-1 rounded-full bg-violet-950/60 text-violet-300 border border-violet-800/40 mb-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-full bg-violet-950/60 text-violet-300 border border-violet-800/40 mb-2">
                         <span>{LANG_FLAGS[room.language] ?? "🌐"}</span>
                         {room.language}
                     </span>
 
                     {/* Room title */}
-                    <h3 className="text-white font-semibold text-xl leading-snug line-clamp-2">
+                    <h3 className="text-white font-semibold text-sm leading-snug line-clamp-2">
                         {room.title}
                     </h3>
                 </div>
@@ -81,7 +81,7 @@ export default function RoomCard({ room }: { room: Room }) {
                 {/* Capacity label */}
                 <div className="flex items-center gap-1.5 mb-3">
                     <Users size={12} className="text-zinc-600" />
-                    <span className="text-sm text-zinc-500">
+                    <span className="text-xs text-zinc-500">
                         {room.activeParticipants} / {room.maxUser} joined
                     </span>
 
@@ -138,7 +138,7 @@ export default function RoomCard({ room }: { room: Room }) {
                         : 'bg-violet-600 hover:bg-violet-500 text-white cursor-pointer shadow-md shadow-violet-600/20'
                 }`}
             >
-                {isFull ? 'Room Full' : 'Join Room'}
+                {isFull ? 'Room Full' : `Join Room`}
             </button>
         </div>
     );

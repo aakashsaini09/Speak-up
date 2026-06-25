@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className='dark'>
-      <body className={`${Open_Sansfont.className} antialiased bg-black`}>
+      <body className={`${Open_Sansfont.className} antialiased bg-zinc-950`}>
         <ClerkProvider>
           {children}
           <Toaster/>

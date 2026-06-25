@@ -21,7 +21,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { getToken } from "@clerk/nextjs";
 import { Mic, Users } from "lucide-react";
-
+// import OpenAI from "openai";
 const LANGUAGES = [
     "English", "Hindi", "Japanese", "Tamil", "Telugu",
     "Marathi", "Chinese", "Korean", "French", "Italian",
@@ -46,6 +46,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
         maxUser: 3,
     });
     const [loading, setLoading] = useState(false);
+    // const client = new OpenAI({apiKey: process.env.NEXT_OPENAI_Key!});
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
     const createRoom = async () => {
@@ -81,10 +82,47 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
             setLoading(false);
         }
     };
-
+    const generateTitle = async () =>{
+        // e.preventDefault()
+        setLoading(true)
+        try {
+            const res = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input: `
+           Generate ONE short and engaging room title for a language practice platform.
+            Requirements:
+            - 2 to 6 words only
+            - Sound natural and inviting
+            - Suitable for voice or text conversation
+            - Focus on language learning, speaking, culture, travel, daily life, movies, or casual discussion
+            - Do not use quotation marks
+            - Do not use numbering
+            - Do not add explanations
+            - Return ONLY the title
+            - Use emoji sometimes
+            Examples:
+            English Speaking Practice
+            Talk About Travel and Advantures
+            Movie, Series and Anime Lovers 
+            Talk about AI and IT
+            Learn Through Discussion` }),
+            });
+            const data = await res.json();
+            setRoomData((pre) => ({
+                ...pre,
+                title: data.text
+            }))
+            setLoading(false)
+        } catch (error) {
+            console.log("Error while generating: ", error)
+            toast.error("Something went wrong!")
+            setLoading(false)
+        }
+    }
     return (
         <Dialog open={popup} onOpenChange={setPopup}>
-            <DialogContent className="sm:max-w-md pb-5 bg-transparent border border-zinc-800 text-white p-0 gap-0 overflow-hidden">
+            <DialogContent className="sm:max-w-md pb-5 bg-black border border-zinc-800 text-white p-0 gap-0 overflow-hidden">
 
                 {/* Header */}
                 <DialogHeader className="px-6 pt-6 pb-4 border-b border-zinc-800/80">
@@ -104,9 +142,20 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
 
                     {/* Title */}
                     <div className="flex flex-col gap-1.5">
-                        <label htmlFor="title" className="text-sm font-medium text-zinc-300">
-                            Room Title
-                        </label>
+                        <div className="flex w-full justify-between">
+                            <label htmlFor="title" className="text-sm font-medium text-zinc-300">
+                                Room Title
+                            </label>
+                            <button 
+                                onClick={generateTitle} 
+                                disabled={loading}
+                                className={`text-xs ${loading ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                    {loading ? (
+                                        <span className="flex items-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Generating…
+                                        </span> ) : 'Generate with AI🤖'}</button>
+                        </div>
                         <input
                             id="title"
                             value={roomData.title}

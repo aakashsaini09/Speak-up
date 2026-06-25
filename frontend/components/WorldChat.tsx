@@ -151,7 +151,7 @@ export default function WorldChat() {
     inputRef.current?.focus();
   }
   const deleteMessage = (id: string) => {
-    toast("message delete: " + id)
+    toast("Not working yet!")
   }
   return (
     <div className="sm:h-[82vh] md:h-[90vh] w-full bg-zinc-950 text-white flex justify-center p-4 pt-0">
