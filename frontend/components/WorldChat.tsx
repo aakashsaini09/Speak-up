@@ -84,7 +84,7 @@ export default function WorldChat() {
         id: msg.userId,
       }))
     );
-    console.log("messages: ", messages)
+    // console.log("messages: ", messages)
   }
   const formatMessageTime = (dateString) => {
     const date = new Date(dateString);

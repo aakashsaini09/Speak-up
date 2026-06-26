@@ -204,7 +204,7 @@ export default function RoomPage() {
   // ─── Socket + media setup ──────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || !roomId) router.push('/');
 
     const joinData = { roomId, userId: user.id, name: user.firstName, imageUrl: user.imageUrl };
     const handleCount = (count: number) => setUserCount(count);
