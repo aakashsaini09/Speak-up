@@ -122,18 +122,18 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
     }
     return (
         <Dialog open={popup} onOpenChange={setPopup}>
-            <DialogContent className="sm:max-w-md pb-5 bg-black border border-zinc-800 text-white p-0 gap-0 overflow-hidden">
+            <DialogContent className="sm:max-w-md md:max-w-2xl pb-5 bg-black text-white p-0 gap-0 overflow-hidden">
 
                 {/* Header */}
                 <DialogHeader className="px-6 pt-6 pb-4 border-b border-zinc-800/80">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-9 h-9 rounded-xl bg-violet-950/60 border border-violet-800/40 flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-xl bg-transparent border border-violet-800/40 flex items-center justify-center">
                             <Mic size={16} className="text-violet-400" />
                         </div>
                         <DialogTitle className="text-white text-lg font-bold">Create a Room</DialogTitle>
                     </div>
                     <DialogDescription className="text-zinc-500 text-sm leading-relaxed">
-                        Give your room a clear title so others know what language and level to expect.
+                        Be respectfull with the title
                     </DialogDescription>
                 </DialogHeader>
 
@@ -176,7 +176,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                                 value={roomData.language}
                                 onValueChange={value => setRoomData(prev => ({ ...prev, language: value }))}
                             >
-                                <SelectTrigger className="bg-zinc-800/80 border-zinc-700/60 text-white rounded-xl h-10 text-sm focus:ring-violet-600/50">
+                                <SelectTrigger className="bg-zinc-800/80 border-zinc-700/60 text-white px-4 py-3 rounded-xl h-10 text-sm focus:ring-violet-600/50">
                                     <SelectValue placeholder="Language" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-zinc-900 border-zinc-800 text-white">

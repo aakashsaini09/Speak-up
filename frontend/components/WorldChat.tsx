@@ -3,7 +3,7 @@
 import { socket } from "@/lib/socket";
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { Send, Globe, Trash2, EllipsisVertical } from "lucide-react";
+import { Send, Globe, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 export default function WorldChat() {
@@ -16,7 +16,6 @@ export default function WorldChat() {
   const [messages, setMessages] = useState([])
   const { user } = useUser();
   useEffect(() => {
-    // Scroll to the bottom element whenever messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
   // const messages = [
@@ -95,7 +94,6 @@ export default function WorldChat() {
       diffMs / (1000 * 60 * 60 * 24)
     );
 
-    // Today
     if (diffDays === 0) {
       return date.toLocaleTimeString([], {
         hour: "2-digit",
@@ -103,19 +101,16 @@ export default function WorldChat() {
       });
     }
 
-    // Yesterday
     if (diffDays === 1) {
       return "Yesterday";
     }
 
-    // Last 7 days
     if (diffDays < 7) {
       return date.toLocaleDateString([], {
         weekday: "short",
       });
     }
 
-    // Same year
     if (
       date.getFullYear() ===
       now.getFullYear()
@@ -126,7 +121,6 @@ export default function WorldChat() {
       });
     }
 
-    // Older years
     return date.toLocaleDateString([], {
       day: "numeric",
       month: "short",
