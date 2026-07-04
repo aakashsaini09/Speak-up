@@ -4,4 +4,6 @@ node_modules
 
 .env
 
+.next
+
 npm-debug.log
