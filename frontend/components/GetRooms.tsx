@@ -118,7 +118,7 @@ export default function GetRooms({rooms, loading, refresh}) {
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:px-20">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:px-2 md:px-20">
                 {rooms.slice(0).reverse().map((room, idx) => (
                     <RoomCard key={room._id ?? idx} room={room} />
                 ))}

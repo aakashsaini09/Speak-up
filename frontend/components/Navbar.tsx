@@ -25,15 +25,15 @@ export default function Navbar({ value, setValue, refreshRooms }: NavbarProps) {
 
             {/* Logo */}
             <a href="/" className="flex items-center gap-2.5 shrink-0 select-none">
-              <div className="w-8 h-8 rounded-lg bg-[#7254e9] flex items-center justify-center">
+              {/* <div className="w-8 h-8 rounded-xs bg-[#7254e9] flex items-center justify-center">
                 <Globe size={16} className="text-white" />
-              </div>
+              </div> */}
               <span className="font-bold text-xl text-white tracking-tight">
                 Speak<span className="text-[#7254e9]">Up</span>
               </span>
             </a>
 
-            {/* Desktop tabs — hidden on mobile, shown sm+ */}
+            {/* Desktop only, hidden in phone */}
             {isSignedIn && (
               <nav
                 aria-label="Main navigation"
@@ -54,10 +54,9 @@ export default function Navbar({ value, setValue, refreshRooms }: NavbarProps) {
               </nav>
             )}
 
-            {/* Right-side actions */}
             <div className="flex items-center gap-2 shrink-0">
 
-              {/* Signed-out auth buttons */}
+              {/*if user Signed-out */}
               {!isSignedIn && (
                 <>
                   <SignInButton>
@@ -73,7 +72,7 @@ export default function Navbar({ value, setValue, refreshRooms }: NavbarProps) {
                 </>
               )}
 
-              {/* Signed-in actions */}
+              {/* If user Signed-in */}
               {isSignedIn && (
                 <>
                   {value === "rooms" && (
@@ -82,7 +81,6 @@ export default function Navbar({ value, setValue, refreshRooms }: NavbarProps) {
                       className="flex items-center cursor-pointer gap-1.5 bg-[#7254e9] hover:bg-[#6245d4] text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
                     >
                       <Plus size={15} />
-                      {/* Label hidden on very small screens */}
                       <span className="hidden xs:inline sm:inline">Create Room</span>
                     </button>
                   )}
@@ -92,7 +90,7 @@ export default function Navbar({ value, setValue, refreshRooms }: NavbarProps) {
             </div>
           </div>
 
-          {/* ── Mobile tab strip — visible only on < sm ──────────────── */}
+          {/* ── Mobile tab */}
           {isSignedIn && (
             <div className="sm:hidden flex border-t border-zinc-800/60">
               <MobileTab
@@ -118,8 +116,6 @@ export default function Navbar({ value, setValue, refreshRooms }: NavbarProps) {
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
-
 function NavTab({
   active,
   onClick,
@@ -137,7 +133,7 @@ function NavTab({
       className={`flex items-center cursor-pointer gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
         active
           ? "bg-[#7254e9] text-white shadow-sm"
-          : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+          : "text-zinc-400 hover:text-white"
       }`}
     >
       {icon}
@@ -160,10 +156,10 @@ function MobileTab({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-lg font-medium transition-colors border-b-2 ${
         active
           ? "text-[#7254e9] border-[#7254e9]"
-          : "text-zinc-500 border-transparent hover:text-zinc-300"
+          : "text-zinc-500 border-transparent"
       }`}
     >
       {icon}
