@@ -6,74 +6,64 @@ import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import {
   Mic, MicOff, Video, VideoOff,
-  PhoneOff, MessageSquare, X, ArrowLeft, Users,
+  PhoneOff, MessageSquare, X, ArrowLeft, Users, UserX,
+  ShieldCheck
 } from "lucide-react";
 import ChatPanel from "@/components/ChatPanel";
 import { useRouter } from "next/navigation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
+ 
 type Participant = {
   userId: string;
   name: string;
   imageUrl: string;
 };
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
+ 
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
   ],
 };
-
-// ─── Component ────────────────────────────────────────────────────────────────
-
+ 
 export default function RoomPage() {
   const router = useRouter();
   const { user } = useUser();
   const { id: roomId } = useParams();
-
-  // ── UI state ─────────────────────────────────────────────────────────────
+ 
+  // ── UI state ──────────────────────────────────────────────────────────────
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [userCount, setUserCount] = useState(0);
   const [micEnabled, setMicEnabled] = useState(false);
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  // userId of the focused participant (null = default grid view)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  // Which peers currently have an active video track
   const [peersWithVideo, setPeersWithVideo] = useState<Set<string>>(new Set());
-  // Bumped whenever a remote video stream arrives/leaves so SelectedView re-reads the ref
   const [remoteVideoTick, setRemoteVideoTick] = useState(0);
-
-  // ── WebRTC refs ──────────────────────────────────────────────────────────
+ 
+  // ── Admin state ───────────────────────────────────────────────────────────
+  const [isAdmin, setIsAdmin] = useState(false);         // true if current user is admin
+  const [adminUserId, setAdminUserId] = useState<string | null>(null); // who the admin is
+  const [kickedDialogOpen, setKickedDialogOpen] = useState(false);
+ 
+  // ── WebRTC refs ───────────────────────────────────────────────────────────
   const peerConnections = useRef(new Map<string, RTCPeerConnection>());
-  const localStream = useRef<MediaStream | null>(null);      // audio only
-  const localVideoStream = useRef<MediaStream | null>(null); // camera (opt-in)
+  const localStream = useRef<MediaStream | null>(null);
+  const localVideoStream = useRef<MediaStream | null>(null);
   const iceCandidateBuffers = useRef(new Map<string, RTCIceCandidate[]>());
-
-  // ── Audio Web-API refs ───────────────────────────────────────────────────
-  // Remote audio is routed through AudioContext so the browser AEC engine
-  // gets a speaker-reference signal and can cancel echo from the mic.
+ 
+  // ── Audio refs ────────────────────────────────────────────────────────────
   const audioCtx = useRef<AudioContext | null>(null);
   const remoteNodes = useRef(
     new Map<string, { el: HTMLAudioElement; source: MediaStreamAudioSourceNode }>()
   );
-
-  // ── Remote video streams ─────────────────────────────────────────────────
+ 
+  // ── Video refs ────────────────────────────────────────────────────────────
   const remoteVideoStreams = useRef(new Map<string, MediaStream>());
-
+ 
   // ─── Audio helpers ─────────────────────────────────────────────────────────
-
-  const getAudioCtx = (): AudioContext => {
-    if (!audioCtx.current || audioCtx.current.state === "closed") {
-      audioCtx.current = new AudioContext();
-    }
-    return audioCtx.current;
-  };
-
+ 
   const removeRemoteAudio = useCallback((peerId: string) => {
     const node = remoteNodes.current.get(peerId);
     if (!node) return;
@@ -82,78 +72,68 @@ export default function RoomPage() {
     node.el.remove();
     remoteNodes.current.delete(peerId);
   }, []);
-
+ 
   const addRemoteAudio = useCallback((peerId: string, stream: MediaStream) => {
     removeRemoteAudio(peerId);
-    const ctx = getAudioCtx();
+ 
+    if (!audioCtx.current || audioCtx.current.state === "closed") {
+      audioCtx.current = new AudioContext();
+    }
+    const ctx = audioCtx.current;
     ctx.resume();
-
-    // Muted <audio> — kept only to satisfy autoplay policy on some browsers
+ 
     const el = document.createElement("audio");
     el.srcObject = stream;
     el.muted = true;
     el.autoplay = true;
     document.body.appendChild(el);
-
-    // Graph: source → HPF(80 Hz) → compressor → gain(0.85) → destination
+ 
     const source = ctx.createMediaStreamSource(stream);
     const hpf = ctx.createBiquadFilter();
     hpf.type = "highpass";
     hpf.frequency.value = 80;
     hpf.Q.value = 0.7;
-
+ 
     const compressor = ctx.createDynamicsCompressor();
     compressor.threshold.value = -24;
     compressor.knee.value = 10;
     compressor.ratio.value = 4;
     compressor.attack.value = 0.003;
     compressor.release.value = 0.15;
-
+ 
     const gain = ctx.createGain();
     gain.gain.value = 0.85;
-
+ 
     source.connect(hpf);
     hpf.connect(compressor);
     compressor.connect(gain);
     gain.connect(ctx.destination);
-
+ 
     remoteNodes.current.set(peerId, { el, source });
   }, [removeRemoteAudio]);
-
+ 
   // ─── WebRTC helpers ────────────────────────────────────────────────────────
-
-  /**
-   * Creates a brand-new RTCPeerConnection for userId.
-   *
-   * IMPORTANT: do NOT call this for renegotiation (e.g. remote enabled camera).
-   * The webrtc-offer handler reuses the existing PC in that case.
-   */
+ 
   const createPeerConnection = useCallback((userId: string): RTCPeerConnection => {
     peerConnections.current.get(userId)?.close();
     const pc = new RTCPeerConnection(RTC_CONFIG);
-
-    // Always add audio
+ 
     localStream.current?.getAudioTracks().forEach(track => {
       pc.addTrack(track, localStream.current!);
     });
-
-    // Add video too if the camera was already on when this new peer connected
     if (localVideoStream.current) {
       localVideoStream.current.getVideoTracks().forEach(track => {
         pc.addTrack(track, localVideoStream.current!);
       });
     }
-
+ 
     pc.ontrack = ({ track, streams }) => {
       if (track.kind === "audio") {
         addRemoteAudio(userId, streams[0]);
       } else if (track.kind === "video") {
-        // Store the stream and signal the UI
         remoteVideoStreams.current.set(userId, streams[0]);
         setPeersWithVideo(prev => new Set([...prev, userId]));
         setRemoteVideoTick(t => t + 1);
-
-        // Clean up when the remote peer disables / stops their camera
         track.onended = () => {
           remoteVideoStreams.current.delete(userId);
           setPeersWithVideo(prev => { const n = new Set(prev); n.delete(userId); return n; });
@@ -161,13 +141,11 @@ export default function RoomPage() {
         };
       }
     };
-
+ 
     pc.onicecandidate = ({ candidate }) => {
-      if (candidate) {
-        socket.emit("ice-candidate", { targetUserId: userId, candidate });
-      }
+      if (candidate) socket.emit("ice-candidate", { targetUserId: userId, candidate });
     };
-
+ 
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === "failed") pc.restartIce();
       if (pc.connectionState === "disconnected" || pc.connectionState === "closed") {
@@ -176,11 +154,11 @@ export default function RoomPage() {
         setPeersWithVideo(prev => { const n = new Set(prev); n.delete(userId); return n; });
       }
     };
-
+ 
     peerConnections.current.set(userId, pc);
     return pc;
   }, [addRemoteAudio, removeRemoteAudio]);
-
+ 
   const drainIceCandidates = useCallback(async (userId: string, pc: RTCPeerConnection) => {
     const buffered = iceCandidateBuffers.current.get(userId) ?? [];
     for (const candidate of buffered) {
@@ -189,7 +167,7 @@ export default function RoomPage() {
     }
     iceCandidateBuffers.current.delete(userId);
   }, []);
-
+ 
   const cleanupAll = useCallback(() => {
     peerConnections.current.forEach(pc => pc.close());
     peerConnections.current.clear();
@@ -200,21 +178,17 @@ export default function RoomPage() {
     audioCtx.current?.close();
     audioCtx.current = null;
   }, [removeRemoteAudio]);
-
+ 
   // ─── Socket + media setup ──────────────────────────────────────────────────
-
+ 
   useEffect(() => {
-    if (!user?.id || !roomId) router.push('/');
-
+    if (!user?.id) return;
+ 
     const joinData = { roomId, userId: user.id, name: user.firstName, imageUrl: user.imageUrl };
-    const handleCount = (count: number) => setUserCount(count);
+    const handleCount        = (count: number)      => setUserCount(count);
     const handleParticipants = (data: Participant[]) => setParticipants(data);
-
-    socket.on("participants-count", handleCount);
-    socket.on("participants-update", handleParticipants);
-
-    // Offerer path: we just joined, create offers to everyone already in the room
-    socket.on("existing-participants", async (existing: Participant[]) => {
+ 
+    const handleExistingParticipants = async (existing: Participant[]) => {
       for (const p of existing.filter(p => p.userId !== user.id)) {
         if (peerConnections.current.has(p.userId)) continue;
         const pc = createPeerConnection(p.userId);
@@ -222,34 +196,43 @@ export default function RoomPage() {
         await pc.setLocalDescription(offer);
         socket.emit("webrtc-offer", { targetUserId: p.userId, sdp: pc.localDescription });
       }
-    });
-
-    // Answerer path — also handles renegotiation offers (e.g. remote enabled camera)
-    socket.on("webrtc-offer", async (data: { senderUserId: string; sdp: RTCSessionDescriptionInit }) => {
-      // If an active connection already exists, this is a renegotiation — reuse the PC.
-      // Only create a new one if there's no usable connection.
+    };
+ 
+    const handleOffer = async (data: { senderUserId: string; sdp: RTCSessionDescriptionInit }) => {
       const existing = peerConnections.current.get(data.senderUserId);
       const isRenegotiation = !!existing
         && existing.connectionState !== "closed"
         && existing.connectionState !== "failed";
-
+ 
       const pc = isRenegotiation ? existing! : createPeerConnection(data.senderUserId);
-
       await pc.setRemoteDescription(data.sdp);
       await drainIceCandidates(data.senderUserId, pc);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit("webrtc-answer", { targetUserId: data.senderUserId, sdp: pc.localDescription });
-    });
-
-    socket.on("webrtc-answer", async (data: { senderUserId: string; sdp: RTCSessionDescriptionInit }) => {
+ 
+      if (!isRenegotiation && localVideoStream.current) {
+        const negotiatedSDP = pc.localDescription?.sdp ?? "";
+        if (!negotiatedSDP.includes("m=video")) {
+          try {
+            const videoOffer = await pc.createOffer();
+            await pc.setLocalDescription(videoOffer);
+            socket.emit("webrtc-offer", { targetUserId: data.senderUserId, sdp: pc.localDescription });
+          } catch (err) {
+            console.error("[Video] Late-joiner renegotiation failed:", err);
+          }
+        }
+      }
+    };
+ 
+    const handleAnswer = async (data: { senderUserId: string; sdp: RTCSessionDescriptionInit }) => {
       const pc = peerConnections.current.get(data.senderUserId);
       if (!pc || pc.signalingState !== "have-local-offer") return;
       await pc.setRemoteDescription(data.sdp);
       await drainIceCandidates(data.senderUserId, pc);
-    });
-
-    socket.on("ice-candidate", async (data: { senderUserId: string; candidate: RTCIceCandidateInit }) => {
+    };
+ 
+    const handleIceCandidate = async (data: { senderUserId: string; candidate: RTCIceCandidateInit }) => {
       const pc = peerConnections.current.get(data.senderUserId);
       if (!pc?.remoteDescription) {
         const buf = iceCandidateBuffers.current.get(data.senderUserId) ?? [];
@@ -259,51 +242,80 @@ export default function RoomPage() {
       }
       try { await pc.addIceCandidate(data.candidate); }
       catch (err) { console.warn("[ICE] addIceCandidate failed:", err); }
-    });
-
-    // Get mic only — camera is opt-in via the button
+    };
+ 
+    // ── Admin events ─────────────────────────────────────────────────────────
+    const handleIsAdmin  = (value: boolean)  => setIsAdmin(value);
+    const handleAdminUser = (userId: string) => setAdminUserId(userId);
+    const handleKicked   = () => {
+      // Stop everything locally, show dialog, then redirect
+      cleanupAll();
+      localStream.current?.getTracks().forEach(t => t.stop());
+      localVideoStream.current?.getTracks().forEach(t => t.stop());
+      localStream.current = null;
+      localVideoStream.current = null;
+      setKickedDialogOpen(true);
+    };
+ 
+    socket.on("participants-count",    handleCount);
+    socket.on("participants-update",   handleParticipants);
+    socket.on("existing-participants", handleExistingParticipants);
+    socket.on("webrtc-offer",          handleOffer);
+    socket.on("webrtc-answer",         handleAnswer);
+    socket.on("ice-candidate",         handleIceCandidate);
+    socket.on("is-admin",              handleIsAdmin);
+    socket.on("admin-user",            handleAdminUser);
+    socket.on("kicked",                handleKicked);
+ 
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
         });
-        stream.getAudioTracks()[0].enabled = false; // start muted, matches UI
+        stream.getAudioTracks()[0].enabled = false;
         localStream.current = stream;
         socket.emit("join-room", joinData);
       } catch (err) {
         console.error("[Media] Microphone access denied:", err);
       }
     })();
-
+ 
     return () => {
       cleanupAll();
       localStream.current?.getTracks().forEach(t => t.stop());
       localVideoStream.current?.getTracks().forEach(t => t.stop());
       localStream.current = null;
       localVideoStream.current = null;
-      socket.off("participants-count", handleCount);
-      socket.off("participants-update", handleParticipants);
-      socket.off("existing-participants");
-      socket.off("webrtc-offer");
-      socket.off("webrtc-answer");
-      socket.off("ice-candidate");
+      socket.off("participants-count",    handleCount);
+      socket.off("participants-update",   handleParticipants);
+      socket.off("existing-participants", handleExistingParticipants);
+      socket.off("webrtc-offer",          handleOffer);
+      socket.off("webrtc-answer",         handleAnswer);
+      socket.off("ice-candidate",         handleIceCandidate);
+      socket.off("is-admin",              handleIsAdmin);
+      socket.off("admin-user",            handleAdminUser);
+      socket.off("kicked",                handleKicked);
       socket.off("room-message");
     };
   }, [roomId, user?.id, createPeerConnection, drainIceCandidates, cleanupAll]);
-
+ 
   // ─── Controls ──────────────────────────────────────────────────────────────
-
+ 
   const toggleMic = () => {
     const track = localStream.current?.getAudioTracks()[0];
     if (!track) return;
     track.enabled = !track.enabled;
     setMicEnabled(track.enabled);
   };
-
+ 
   const toggleCam = async () => {
     if (cameraEnabled) {
       localVideoStream.current?.getTracks().forEach(t => t.stop());
       localVideoStream.current = null;
+      for (const pc of peerConnections.current.values()) {
+        const sender = pc.getSenders().find(s => s.track?.kind === "video");
+        if (sender) await sender.replaceTrack(null);
+      }
       setCameraEnabled(false);
     } else {
       try {
@@ -312,15 +324,11 @@ export default function RoomPage() {
         });
         localVideoStream.current = videoStream;
         const videoTrack = videoStream.getVideoTracks()[0];
-
         for (const [peerId, pc] of peerConnections.current) {
           const existingSender = pc.getSenders().find(s => s.track?.kind === "video");
-
           if (existingSender) {
-            // replaceTrack keeps the same codec — no renegotiation needed
             await existingSender.replaceTrack(videoTrack);
           } else {
-            // First time adding video to this PC — must renegotiate
             pc.addTrack(videoTrack, videoStream);
             if (pc.signalingState === "stable") {
               try {
@@ -333,14 +341,13 @@ export default function RoomPage() {
             }
           }
         }
-
         setCameraEnabled(true);
       } catch (err) {
         console.error("[Camera] Access denied:", err);
       }
     }
   };
-
+ 
   const leaveRoom = () => {
     cleanupAll();
     localStream.current?.getTracks().forEach(t => t.stop());
@@ -350,11 +357,37 @@ export default function RoomPage() {
     socket.emit("leave-room");
     router.push("/");
   };
-
+ 
+  const kickUser = (targetUserId: string) => {
+    if (!isAdmin) return;
+    socket.emit("kick-user", { targetUserId });
+  };
+ 
   const handleParticipantClick = (userId: string) => {
-    // Toggle: clicking the already-selected participant deselects
     setSelectedUserId(prev => (prev === userId ? null : userId));
   };
+ 
+  // ─── Kicked dialog ─────────────────────────────────────────────────────────
+ 
+  if (kickedDialogOpen) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8 max-w-sm w-full text-center space-y-4">
+          <UserX className="w-12 h-12 text-red-500 mx-auto" />
+          <h2 className="text-xl font-semibold text-white">You were removed</h2>
+          <p className="text-zinc-400 text-sm">
+            The room admin has removed you from this room. You cannot rejoin.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-lg transition-colors"
+          >
+            Go home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -423,6 +456,7 @@ export default function RoomPage() {
                     participant={p}
                     isSelected={p.userId === selectedUserId}
                     hasVideo={p.userId === user?.id ? cameraEnabled : peersWithVideo.has(p.userId)}
+                    isAdmin={p.userId === adminUserId}
                     onClick={() => handleParticipantClick(p.userId)}
                   />
                 ))}
@@ -439,15 +473,18 @@ export default function RoomPage() {
               <EmptyRoom />
             ) : (
               <div className="flex flex-wrap gap-6 justify-center items-center max-w-2xl">
-                {participants.map(p => (
-                  <ParticipantCard
-                    key={p.userId}
-                    participant={p}
-                    hasVideo={p.userId === user?.id ? cameraEnabled : peersWithVideo.has(p.userId)}
-                    isLocalUser={p.userId === user?.id}
-                    onClick={() => handleParticipantClick(p.userId)}
-                  />
-                ))}
+              {participants.map(p => (
+                <ParticipantCard
+                  key={p.userId}
+                  participant={p}
+                  hasVideo={p.userId === user?.id ? cameraEnabled : peersWithVideo.has(p.userId)}
+                  isLocalUser={p.userId === user?.id}
+                  isAdmin={adminUserId === p.userId}   // ← was: isAdmin (your own status)
+                  canKick={isAdmin && p.userId !== user?.id}
+                  onKick={() => kickUser(p.userId)}
+                  onClick={() => handleParticipantClick(p.userId)}
+                />
+              ))}
               </div>
             )}
           </div>
@@ -616,11 +653,12 @@ function SelectedParticipantView({
  * Violet outline = currently selected. Camera icon badge = has video active.
  */
 function ParticipantStrip({
-  participant, isSelected, hasVideo, onClick,
+  participant, isSelected, isAdmin, hasVideo, onClick,
 }: {
   participant: Participant;
   isSelected: boolean;
   hasVideo: boolean;
+  isAdmin: boolean;
   onClick: () => void;
 }) {
   return (
@@ -645,6 +683,11 @@ function ParticipantStrip({
             <Video size={8} className="text-white" />
           </span>
         )}
+        {isAdmin && (
+          <span className="absolute bottom-0.5 left-0.5 w-5 h-5 rounded-full bg-green-500 border-2 border-zinc-950 flex items-center justify-center">
+            <ShieldCheck size={9} className="text-zinc-950" />
+          </span>
+        )}
       </div>
       <p className="text-[11px] text-zinc-400 max-w-13 truncate">{participant.name}</p>
     </button>
@@ -656,15 +699,24 @@ function ParticipantStrip({
  * Camera badge on top-right corner when the peer has video active.
  */
 function ParticipantCard({
-  participant, hasVideo, isLocalUser, onClick,
+  participant,
+  hasVideo,
+  isLocalUser,
+  isAdmin,
+  canKick,
+  onKick,
+  onClick,
 }: {
   participant: Participant;
   hasVideo: boolean;
   isLocalUser: boolean;
+  isAdmin: boolean;   // this participant IS the admin
+  canKick: boolean;   // current user can kick this participant
+  onKick: () => void;
   onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-2.5 group cursor-pointer">
+    <div onClick={onClick} className="flex flex-col items-center gap-2.5 group cursor-pointer relative">
       <div className="relative">
         {/* Soft glow ring on hover */}
         <div className="absolute -inset-1 rounded-full bg-violet-600/0 group-hover:bg-violet-600/20 transition-all duration-300 blur-sm" />
@@ -681,12 +733,31 @@ function ParticipantCard({
             <Video size={9} className="text-white" />
           </span>
         )}
+        {/* Admin crown — bottom-left, doesn't clash with camera or online badges */}
+        {isAdmin && (
+          <span className="absolute bottom-0.5 left-0.5 w-5 h-5 rounded-full bg-green-500 border-2 border-zinc-950 flex items-center justify-center">
+            <ShieldCheck size={9} className="text-zinc-950" />
+          </span>
+        )}
       </div>
+
       <div className="text-center">
         <p className="text-sm text-zinc-300 font-medium max-w-20 truncate">{participant.name}</p>
         {isLocalUser && <p className="text-[10px] text-zinc-600 mt-0.5">You</p>}
+        {isAdmin && !isLocalUser && <p className="text-[10px] text-amber-500 mt-0.5">Admin</p>}
       </div>
-    </button>
+
+      {/* Kick button — floats top-right of the whole card, only for admin */}
+      {canKick && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onKick(); }}
+          className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+          title="Remove from room"
+        >
+          <UserX size={10} />
+        </button>
+      )}
+    </div>
   );
 }
 
