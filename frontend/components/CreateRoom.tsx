@@ -46,6 +46,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
         maxUser: 3,
     });
     const [loading, setLoading] = useState(false);
+    const [AiLoading, setAiLoading] = useState(false);
     // const client = new OpenAI({apiKey: process.env.NEXT_OPENAI_Key!});
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
@@ -84,7 +85,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
     };
     const generateTitle = async () =>{
         // e.preventDefault()
-        setLoading(true)
+        setAiLoading(true)
         try {
             const res = await fetch("/api/generate", {
             method: "POST",
@@ -95,7 +96,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
             - 2 to 6 words only
             - Sound natural and inviting
             - Suitable for voice or text conversation
-            - Focus on language learning, speaking, culture, travel, daily life, movies, or casual discussion
+            - Related to learning, speaking, culture, travel, daily life, movies, powerfull quote or casual discussion
             - Do not use quotation marks
             - Do not use numbering
             - Do not add explanations
@@ -113,11 +114,11 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                 ...pre,
                 title: data.text
             }))
-            setLoading(false)
+            setAiLoading(false)
         } catch (error) {
             console.log("Error while generating: ", error)
             toast.error("Something went wrong!")
-            setLoading(false)
+            setAiLoading(false)
         }
     }
     return (
@@ -148,9 +149,9 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                             </label>
                             <button 
                                 onClick={generateTitle} 
-                                disabled={loading}
-                                className={`text-xs ${loading ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
-                                    {loading ? (
+                                disabled={AiLoading}
+                                className={`text-xs ${AiLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                    {AiLoading ? (
                                         <span className="flex items-center gap-2">
                                             <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                             Generating…

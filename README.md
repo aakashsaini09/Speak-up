@@ -12,9 +12,9 @@
   <br />
   <a href="https://speak-up.online">Live Demo</a>
   ·
-  <a href="https://github.com/aakashsaini09/SpeakUp/issues">Report Bug</a>
+  <a href="https://github.com/aakashsaini09/Speak-Up/issues">Report Bug</a>
   ·
-  <a href="https://github.com/aakashsaini09/SpeakUp/issues">Request Feature</a>
+  <a href="https://github.com/aakashsaini09/Speak-Up/issues">Request Feature</a>
 </p>
 
 </div>
@@ -218,4 +218,3 @@ https://speak-up.online
 Made with ❤️ using Next.js, Socket.IO and WebRTC
 
 </div>
-```
