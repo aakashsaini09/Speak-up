@@ -173,19 +173,31 @@ export const deleteReq = async (req, res) => {
       });
     }
 
-    const deleteReq = await Friendship.findByIdAndDelete(friendshipId);
+    const friendship = await Friendship.findById(friendshipId);
 
-    if (!deleteReq) {
+    if (!friendship) {
       return res.status(404).json({
         success: false,
         message: "Friend request not found",
       });
     }
 
+    const isParticipant =
+      friendship.sender.toString() === user._id.toString() ||
+      friendship.receiver.toString() === user._id.toString();
+
+    if (!isParticipant) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to cancel this request.",
+      });
+    }
+
+    await Friendship.findByIdAndDelete(friendshipId);
+
     return res.status(200).json({
       success: true,
       message: "Friend request deleted.",
-      deleteReq,
     });
   } catch (error) {
     console.error(error);
@@ -219,7 +231,7 @@ export const sendedReq = async (req, res) => {
       sender: user._id,
       status: "pending",
     })
-    .populate("receiver", "firstName lastName imageUrl");
+    .populate("receiver", "clerkId firstName lastName imageUrl");
 
     const following = requests.map(req => ({
       friendshipId: req._id,
@@ -263,7 +275,7 @@ export const incomingReq = async (req, res) => {
       receiver: user._id,
       status: "pending",
     })
-    .populate("sender", "firstName lastName imageUrl");
+    .populate("sender", "clerkId firstName lastName imageUrl");
 
     const following = requests.map(req => ({
       friendshipId: req._id,
@@ -311,8 +323,8 @@ export const Myfriends = async (req, res) => {
         { receiver: user._id },
       ],
     })
-    .populate("sender", "firstName lastName imageUrl")
-    .populate("receiver", "firstName lastName imageUrl");
+    .populate("sender", "clerkId firstName lastName imageUrl")
+    .populate("receiver", "clerkId firstName lastName imageUrl");
 
     const friendList = friends.map(friend => {
       const otherUser =

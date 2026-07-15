@@ -277,9 +277,10 @@ function PersonRow({
     try {
       const token = await getToken();
       const url =
-        mode === "friend" ? `${base}/api/friend/deletefriend/${person.friendshipId}`
-          : `${base}/api/friend/request/cancel/${person.clerkId}`;
-      const res = await api.delete(url, { headers: { Authorization: `Bearer ${token}` } });
+        mode === "friend"
+          ? `${base}/api/friend/deletefriend/${person.friendshipId}`
+          : `${base}/api/friend/requests/${person.friendshipId}`;
+      await api.delete(url, { headers: { Authorization: `Bearer ${token}` } });
       toast.success(mode === "friend" ? "Friend removed" : "Request cancelled");
       onDone();
     } catch (err: any) {
