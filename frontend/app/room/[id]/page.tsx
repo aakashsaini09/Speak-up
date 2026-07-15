@@ -4,13 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { socket } from "@/lib/socket";
 import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { getToken } from "@clerk/nextjs";
 import {
   Mic, MicOff, Video, VideoOff,
   PhoneOff, MessageSquare, X, ArrowLeft, Users, UserX,
-  ShieldCheck
+  ShieldCheck, UserRoundPlus 
 } from "lucide-react";
 import ChatPanel from "@/components/ChatPanel";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
  
@@ -366,7 +369,9 @@ export default function RoomPage() {
   const handleParticipantClick = (userId: string) => {
     setSelectedUserId(prev => (prev === userId ? null : userId));
   };
- 
+  const sendReq = () => {
+
+  }
   // ─── Kicked dialog ─────────────────────────────────────────────────────────
  
   if (kickedDialogOpen) {
@@ -422,11 +427,6 @@ export default function RoomPage() {
       {/* ── Main content ─────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden min-h-0">
         {selectedUserId ? (
-          /*
-           * FOCUSED VIEW
-           * Top area: selected participant's video or portrait
-           * Bottom strip: scrollable row of all participants to switch between
-           */
           <>
             <div className="flex-1 flex items-center justify-center p-6 overflow-hidden min-h-0">
               {(() => {
@@ -569,13 +569,6 @@ export default function RoomPage() {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-/**
- * Focused view for a single participant.
- * Shows their video if camera is on, or a portrait card if it's off.
- *
- * Reads streams from refs and re-runs when `remoteVideoTick` bumps so the
- * video element gets the fresh stream without unnecessary re-renders.
- */
 function SelectedParticipantView({
   userId, participant, isLocalUser,
   localVideoStream, remoteVideoStreams,
@@ -715,6 +708,26 @@ function ParticipantCard({
   onKick: () => void;
   onClick: () => void;
 }) {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+
+
+  async function sendReq() {
+    // Send a friend request to the participant
+    try {
+      const token = await getToken();
+      console.log(`Friend request sent to ${participant.userId},`, participant.name, participant.imageUrl);
+      await axios.post(`${backendUrl}/api/friend/requests`, { 
+        receiverId: participant.userId 
+      }, { 
+        headers: { Authorization: `Bearer ${token}` 
+      } });
+
+    } catch (err) {
+      console.error("Error sending friend request:", err);
+      toast.error("Error: ", err.message)
+    }
+  }
+
   return (
     <div onClick={onClick} className="flex flex-col items-center gap-2.5 group cursor-pointer relative">
       <div className="relative">
@@ -731,6 +744,11 @@ function ParticipantCard({
         {hasVideo && (
           <span className="absolute top-0 right-0 w-5 h-5 rounded-full bg-violet-600 border-2 border-zinc-950 flex items-center justify-center">
             <Video size={9} className="text-white" />
+          </span>
+        )}
+        {!isLocalUser && (
+          <span onClick={(e) => {sendReq() }}>
+            <UserRoundPlus size={10}/>
           </span>
         )}
         {/* Admin crown — bottom-left, doesn't clash with camera or online badges */}
