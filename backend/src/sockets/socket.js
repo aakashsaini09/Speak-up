@@ -3,6 +3,8 @@ import { activeRooms, worldChatUsers } from "./activeRooms.js";
 import Room from "../models/room.model.js";
 import User from "../models/userModel.js";
 import { saveWorldChatMsg, updateUserCount } from "./updateInDB.js";
+import Conversation from "../models/conversation.model.js";
+import { saveChatMessage } from "../controllers/chatController.js";
 
 // Per-room ban lists: roomId → Set<userId>
 const roomBans = new Map();
@@ -33,6 +35,71 @@ export const initializeSocket = async (server) => {
   });
 
   io.on("connection", (socket) => {
+
+    // ── Direct chat ────────────────────────────────────────────────────────
+
+    socket.on("join-chat", async (payload) => {
+      const conversationId = typeof payload === "string" ? payload : payload?.conversationId;
+      const clerkId = typeof payload === "object" ? payload?.clerkId : undefined;
+
+      if (!conversationId || !clerkId) return;
+
+      try {
+        const [user, conversation] = await Promise.all([
+          User.findOne({ clerkId }).select("_id clerkId"),
+          Conversation.findById(conversationId).select("participants"),
+        ]);
+
+        if (!user || !conversation) return;
+
+        const isParticipant = conversation.participants.some(
+          (participantId) => String(participantId) === String(user._id)
+        );
+
+        if (!isParticipant) return;
+
+        socket.chatConversationId = conversationId;
+        socket.chatUserId = String(user._id);
+        socket.chatClerkId = clerkId;
+        socket.join(conversationId);
+
+        conversation.lastReadAt.set(String(user._id), new Date());
+        await conversation.save();
+      } catch (error) {
+        console.error("[Chat] join failed:", error);
+      }
+    });
+
+    socket.on("send-message", async (data) => {
+      const conversationId = data?.conversationId ?? socket.chatConversationId;
+      const text = typeof data?.text === "string" ? data.text : "";
+
+      if (!conversationId || !socket.chatUserId) return;
+
+      try {
+        const savedMessage = await saveChatMessage({
+          conversationId,
+          senderId: socket.chatUserId,
+          text,
+        });
+
+        io.to(conversationId).emit("new-message", savedMessage);
+      } catch (error) {
+        socket.emit("chat-error", {
+          message: error instanceof Error ? error.message : "Failed to send message",
+        });
+      }
+    });
+
+    socket.on("leave-chat", async (payload) => {
+      const conversationId = typeof payload === "string" ? payload : payload?.conversationId;
+      if (!conversationId) return;
+
+      socket.leave(conversationId);
+      if (socket.chatConversationId === conversationId) {
+        socket.chatConversationId = undefined;
+      }
+    });
 
     // ── Join room ───────────────────────────────────────────────────────────
 

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   MessageCircle,
@@ -32,6 +33,19 @@ type Friend = {
     friendshipId?: string;
   };
   _id: string;
+};
+
+type ConversationRow = {
+  conversationId: string;
+  user: {
+    _id: string;
+    firstName: string;
+    imageUrl: string;
+    clerkId: string;
+  } | null;
+  lastMessage: string;
+  lastMessageAt: string;
+  unreadCount: number;
 };
 
 type Request = {
@@ -67,42 +81,42 @@ interface Props {
 }
 export default function Network({ popup, setPopup, refetchRooms }: Props) {
   const [tab, setTab] = useState<Tab>("All");
-
+  const [selected, setSelected] = useState("social")
   return (
     <Dialog open={popup} onOpenChange={setPopup}>
   <DialogContent className="sm:max-w-md md:max-w-2xl h-[80vh] bg-zinc-900 border border-zinc-800 rounded-2xl p-0 overflow-hidden flex flex-col gap-0">
     {/* Header */}
-    <div className="h-14 flex items-center justify-between px-5 border-b border-zinc-800 shrink-0">
-      <h2 className="text-sm font-semibold text-zinc-100 tracking-wide">
-        Network
+    <div className="h-14 flex items-center justify-around px-5 border-b border-zinc-800 shrink-0">
+      <h2 onClick={()=> setSelected("social")} className={`cursor-pointer text-sm ${selected == 'social' ? 'border-b-2 border-yellow-500 text-red-500': 'text-zinc-100'} font-semibold tracking-wide`}>
+        Social
+      </h2>
+      <h2 onClick={() =>setSelected("chat")} className={`cursor-pointer text-sm ${selected == 'chat' ? 'border-b-2 border-yellow-500 text-red-500': 'text-zinc-100'} font-semibold tracking-wide`}>
+        Chats
       </h2>
     </div>
 
-    {/* Tabs */}
-    <div className="h-12 flex items-center border-b border-zinc-800 px-2 shrink-0">
-  {TABS.map((t) => (
-    <button
-      key={t}
-      onClick={() => setTab(t)}
-      className={`h-full flex items-center gap-1.5 px-3 text-xs font-medium transition-colors relative ${
-        tab === t
-          ? "text-zinc-100"
-          : "text-zinc-500 hover:text-zinc-300"
-      }`}
-    >
-      {TAB_ICONS[t]}
-      {t}
-      {tab === t && (
-        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
-      )}
-    </button>
-  ))}
-</div>
-
-    {/* Content */}
+    {selected == 'social' ? <><div className="h-12 flex items-center border-b border-zinc-800 px-2 shrink-0">
+      {TABS.map((t) => (
+        <button
+          key={t}
+          onClick={() => setTab(t)}
+          className={`h-full flex items-center gap-1.5 px-3 text-xs font-medium transition-colors relative ${
+            tab === t
+              ? "text-zinc-100"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          {TAB_ICONS[t]}
+          {t}
+          {tab === t && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
+          )}
+        </button>
+      ))}
+    </div>
     <div className="flex-1 overflow-y-auto">
       <NetworkContent tab={tab} />
-    </div>
+    </div></> : <div className="flex-1 overflow-y-auto"><ChatContent /></div>}
   </DialogContent>
 </Dialog>
   );
@@ -269,8 +283,33 @@ function PersonRow({
   onDone: () => void;
 }) {
   const { getToken } = useAuth();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+
+  const openChat = async () => {
+    setBusy(true);
+    try {
+      const token = await getToken();
+      const res = await api.post(
+        `${base}/api/chat/open`,
+        { friendId: person._id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const conversationId = res.data?.conversationId;
+      if (!conversationId) {
+        throw new Error("Conversation not created");
+      }
+
+      router.push(`/chat/${conversationId}`);
+    } catch (err: any) {
+      const timedOut = err?.code === "ECONNABORTED";
+      toast.error(timedOut ? "That took too long — please try again." : err?.message ?? "Failed to open chat");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const action = async () => {
     setBusy(true);
@@ -309,7 +348,7 @@ function PersonRow({
           <ActionButton
             icon={<MessageCircle size={14} />}
             label="Message"
-            onClick={() => toast.info("Chat coming soon")}
+            onClick={openChat}
           />
         )}
         <ActionButton
@@ -418,5 +457,124 @@ function ActionButton({
     >
       {icon}
     </button>
+  );
+}
+
+function ChatContent() {
+  const { getToken } = useAuth();
+  const router = useRouter();
+  const [list, setList] = useState<ConversationRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+
+  const loadChats = useCallback(
+    async (signal: AbortSignal) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = await getToken();
+        const res = await api.get(`${base}/api/chat`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal,
+        });
+        setList(Array.isArray(res.data) ? res.data : res.data?.conversations ?? []);
+      } catch (err: any) {
+        if (axios.isCancel(err) || signal.aborted) return;
+        const timedOut = err?.code === "ECONNABORTED";
+        const message = timedOut
+          ? "This is taking too long — the server may be waking up. Try again."
+          : err?.response?.data?.message ?? err?.message ?? "Something went wrong";
+        setError(message);
+        toast.error(message);
+      } finally {
+        if (!signal.aborted) setLoading(false);
+      }
+    },
+    [base, getToken]
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadChats(controller.signal);
+    return () => controller.abort();
+  }, [loadChats, reloadKey]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-zinc-600">
+        <Loader2 size={20} className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-zinc-600">
+        <p className="text-sm text-center px-8">{error}</p>
+        <button
+          onClick={() => setReloadKey((k) => k + 1)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-300 text-xs font-medium hover:border-indigo-500/50 hover:text-indigo-400 transition-colors"
+        >
+          <RefreshCw size={12} />
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (list.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-2 text-zinc-600">
+        <MessageCircle size={28} strokeWidth={1.5} />
+        <p className="text-sm">No conversations yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="divide-y divide-zinc-800/60">
+      {list.map((conversation) => {
+        const person = conversation.user;
+
+        return (
+          <li
+            key={conversation.conversationId}
+            className="flex items-center gap-3 px-5 py-3.5 hover:bg-zinc-800/40 group transition-colors cursor-pointer"
+            onClick={() => router.push(`/chat/${conversation.conversationId}`)}
+          >
+            <img
+              src={person?.imageUrl}
+              alt={person?.firstName ?? "Conversation"}
+              className="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-zinc-700"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-medium text-zinc-200 truncate">
+                  {person?.firstName ?? "Unknown"}
+                </p>
+                <span className="text-[11px] text-zinc-500 shrink-0">
+                  {conversation.lastMessageAt ? new Date(conversation.lastMessageAt).toLocaleDateString() : ""}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 mt-0.5 truncate">
+                {conversation.lastMessage || "Start a conversation"}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {conversation.unreadCount > 0 && (
+                <span className="min-w-5 h-5 px-1 rounded-full bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center">
+                  {conversation.unreadCount > 9 ? "9+" : conversation.unreadCount}
+                </span>
+              )}
+              <span className="text-[11px] text-zinc-500">
+                {conversation.lastMessageAt ? new Date(conversation.lastMessageAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+              </span>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
