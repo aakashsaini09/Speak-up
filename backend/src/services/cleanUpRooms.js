@@ -1,31 +1,35 @@
 import Room from "../models/room.model.js";
+import { deleteFilesFromR2 } from "./cleanUpImages.js";
 
 export const startRoomCleanupJob = () => {
   setInterval(async () => {
     try {
+      const twoMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const roomsToDelete = await Room.find({
+        activeParticipants: 0,
+        lastActiveAt: {
+          $lt: twoMinutesAgo,
+        }
+      }).select("_id");
 
-      const twoMinutesAgo =
-        new Date(
-          Date.now() - 5 * 60 * 1000
-        );
+      if (!roomsToDelete.length) {
+        return;
+      }
 
-      const result =
-        await Room.deleteMany({
-          activeParticipants: 0,
-          lastActiveAt: {
-            $lt: twoMinutesAgo
-          }
-        });
+      const roomIds = roomsToDelete.map((room) => String(room._id));
 
-      // console.log(
-      //   `Deleted ${result.deletedCount} inactive rooms`
-      // );
+      const result = await Room.deleteMany({
+        _id: { $in: roomIds },
+      });
 
+      if (result.deletedCount > 0) {
+        await deleteFilesFromR2(roomIds);
+      }
     } catch (error) {
       console.error(
         "Cleanup Job Error:",
         error
       );
     }
-  }, 60 * 5000); // every 5 minute
+  }, 60 * 5000); // every 5 minutes
 };

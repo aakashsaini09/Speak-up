@@ -11,6 +11,7 @@ import { initializeSocket } from "./sockets/socket.js";
 import { startRoomCleanupJob } from "./services/cleanUpRooms.js";
 import messageRouter from "./routes/message.route.js";
 import friendRoutes from "./routes/friends.route.js";
+import uploadRoute from "./routes/upload.routes.js";
 const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
@@ -29,6 +30,7 @@ app.use(express.json());
 app.use("/api/room", roomRoutes);
 app.use("/api/messages", messageRouter);
 app.use("/api/friend", friendRoutes);
+app.use("/api/upload", uploadRoute);
 const server = http.createServer(app);
 
 // Initialize Socket.IO

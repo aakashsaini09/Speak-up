@@ -61,6 +61,7 @@ export default function RoomPage() {
   const [micEnabled, setMicEnabled] = useState(false);
   const [videoMode, setVideoMode] = useState<VideoMode>("off");
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [peersWithVideo, setPeersWithVideo] = useState<Set<string>>(new Set());
   const [remoteVideoTick, setRemoteVideoTick] = useState(0);
@@ -86,6 +87,7 @@ export default function RoomPage() {
  
   // ── Video refs ────────────────────────────────────────────────────────────
   const remoteVideoStreams = useRef(new Map<string, MediaStream>());
+  const chatOpenRef = useRef(chatOpen);
  
   // ─── Audio helpers ─────────────────────────────────────────────────────────
  
@@ -207,6 +209,13 @@ export default function RoomPage() {
   // ─── Socket + media setup ──────────────────────────────────────────────────
  
   useEffect(() => {
+    chatOpenRef.current = chatOpen;
+    if (chatOpen) {
+      setChatUnreadCount(0);
+    }
+  }, [chatOpen]);
+
+  useEffect(() => {
     if (!user?.id) return;
  
     const joinData = { roomId, userId: user.id, name: user.firstName, imageUrl: user.imageUrl };
@@ -269,6 +278,15 @@ export default function RoomPage() {
       catch (err) { console.warn("[ICE] addIceCandidate failed:", err); }
     };
  
+
+    const handleUnreadRoomMessage = (data: { id?: string; message?: string; mediaUrl?: string }) => {
+      if (chatOpenRef.current) return;
+      const hasText = typeof data?.message === "string" && data.message.trim().length > 0;
+      const hasImage = typeof data?.mediaUrl === "string" && data.mediaUrl.trim().length > 0;
+      if (!data || (!hasText && !hasImage)) return;
+      if (!data.id || data.id === user.id) return;
+      setChatUnreadCount((count) => count + 1);
+    };
     // ── Admin events ─────────────────────────────────────────────────────────
     const handleIsAdmin  = (value: boolean)  => setIsAdmin(value);
     const handleAdminUser = (userId: string) => setAdminUserId(userId);
@@ -292,6 +310,7 @@ export default function RoomPage() {
     socket.on("webrtc-offer",          handleOffer);
     socket.on("webrtc-answer",         handleAnswer);
     socket.on("ice-candidate",         handleIceCandidate);
+    socket.on("room-message",          handleUnreadRoomMessage);
     socket.on("is-admin",              handleIsAdmin);
     socket.on("admin-user",            handleAdminUser);
     socket.on("kicked",                handleKicked);
@@ -324,6 +343,7 @@ export default function RoomPage() {
       socket.off("webrtc-offer",          handleOffer);
       socket.off("webrtc-answer",         handleAnswer);
       socket.off("ice-candidate",         handleIceCandidate);
+      socket.off("room-message",          handleUnreadRoomMessage);
       socket.off("is-admin",              handleIsAdmin);
       socket.off("admin-user",            handleAdminUser);
       socket.off("kicked",                handleKicked);
@@ -740,7 +760,14 @@ export default function RoomPage() {
           activeClass="bg-violet-600 hover:bg-violet-500 shadow-lg shadow-violet-600/30"
           inactiveClass="bg-zinc-800 hover:bg-zinc-700"
         >
-          <MessageSquare size={20} />
+          <span className="relative flex items-center justify-center">
+            <MessageSquare size={20} />
+            {chatUnreadCount > 0 && !chatOpen && (
+              <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center border border-zinc-950 shadow-lg">
+                {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+              </span>
+            )}
+          </span>
         </ControlBtn>
 
         <div className="w-px h-8 bg-zinc-800 mx-1" />

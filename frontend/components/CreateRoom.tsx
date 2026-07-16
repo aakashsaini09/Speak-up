@@ -26,11 +26,16 @@ const LANGUAGES = [
     "English", "Hindi", "Japanese", "Tamil", "Telugu",
     "Marathi", "Chinese", "Korean", "French", "Italian",
 ];
+const LABELS = [
+    "Software Development", "Travel & Culture", "Movies & TV", "Music & Arts", "Sports & Recreation",
+    "Food & Cooking", "Technology", "Business & Entrepreneurship", "Education & Learning", "Health & Wellness"
+];
 
 interface RoomData {
     title: string;
     language: string;
     maxUser: number;
+    label?: string;
 }
 
 interface Props {
@@ -43,7 +48,8 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
     const [roomData, setRoomData] = useState<RoomData>({
         title: "",
         language: "English",
-        maxUser: 3,
+        label: "Software Development",
+        maxUser: 3
     });
     const [loading, setLoading] = useState(false);
     const [AiLoading, setAiLoading] = useState(false);
@@ -69,7 +75,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                 refetchRooms()
                 setPopup(false);
                 // Reset form
-                setRoomData({ title: "", language: "English", maxUser: 3 });
+                setRoomData({ title: "", language: "English", maxUser: 3, label: "Software Development" });
             } else {
                 toast.error("Something went wrong");
             }
@@ -177,7 +183,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                                 value={roomData.language}
                                 onValueChange={value => setRoomData(prev => ({ ...prev, language: value }))}
                             >
-                                <SelectTrigger className="bg-zinc-800/80 border-zinc-700/60 text-white px-4 py-3 rounded-xl h-10 text-sm focus:ring-violet-600/50">
+                                <SelectTrigger className="bg-zinc-800/80 min-w-52 border-zinc-700/60 text-white px-4 py-3 rounded-xl h-10 text-sm focus:ring-violet-600/50">
                                     <SelectValue placeholder="Language" />
                                 </SelectTrigger>
                                 <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
@@ -189,6 +195,31 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                                                 className="focus:bg-zinc-800 focus:text-white cursor-pointer"
                                             >
                                                 {lang}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        {/* Label */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-medium text-zinc-300">Label</label>
+                            <Select
+                                value={roomData.label}
+                                onValueChange={value => setRoomData(prev => ({ ...prev, label: value }))}
+                            >
+                                <SelectTrigger className="bg-zinc-800/80 min-w-52 border-zinc-700/60 text-white px-4 py-3 rounded-xl h-10 text-sm focus:ring-violet-600/50">
+                                    <SelectValue placeholder="Label" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                    <SelectGroup>
+                                        {LABELS.map(label => (
+                                            <SelectItem
+                                                key={label}
+                                                value={label}
+                                                className="focus:bg-zinc-800 focus:text-white cursor-pointer"
+                                            >
+                                                {label}
                                             </SelectItem>
                                         ))}
                                     </SelectGroup>

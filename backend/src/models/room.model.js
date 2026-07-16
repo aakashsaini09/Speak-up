@@ -16,6 +16,10 @@ const roomSchema = new mongoose.Schema(
       type: Number,
       required: true
     },
+    label: {
+      type: String,
+      required: true
+    },
     creatorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

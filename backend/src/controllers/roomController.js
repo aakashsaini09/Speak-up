@@ -51,6 +51,7 @@ export const createRoom = async (req, res) => {
       language: language.trim(),
       maxUser: maxUser,
       creatorId: user._id,
+      label: req.body.label || "Software Development",
       creatorImg: user.imageUrl,
       creatorName: user.firstName, 
       activeParticipants: 0,
