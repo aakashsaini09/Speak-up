@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -75,57 +75,111 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
   Requests:  <UserPlus size={13} />,
 };
 interface Props {
-    popup: boolean;
-    setPopup: (open: boolean) => void;
-    refetchRooms: () => void;
+  popup: boolean;
+  setPopup: (open: boolean) => void;
+  refetchRooms: () => void;
+  onUnreadChange?: (count: number) => void;
 }
-export default function Network({ popup, setPopup, refetchRooms }: Props) {
+export default function Network({ popup, setPopup, onUnreadChange }: Props) {
+  const { user } = useUser();
+  const { getToken, isSignedIn } = useAuth();
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+
+  if (!user) {
+    toast.error("Please login first");
+    setPopup(false);
+  }
   const [tab, setTab] = useState<Tab>("All");
-  const [selected, setSelected] = useState("social")
+  const [selected, setSelected] = useState("social");
+  const [chatUnread, setChatUnread] = useState(0);
+
+  const handleUnreadChange = (count: number) => {
+    setChatUnread(count);
+    onUnreadChange?.(count);
+  };
+
+  // Prefetch total unread so the Chats tab badge shows even before opening Chats
+  useEffect(() => {
+    if (!popup || !isSignedIn || !base) return;
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const token = await getToken();
+        const res = await api.get(`${base}/api/chat/unread-count`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        const count = Number(res.data?.unreadCount) || 0;
+        handleUnreadChange(count);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [popup, isSignedIn, base, getToken]);
+
   return (
     <Dialog open={popup} onOpenChange={setPopup}>
-  <DialogContent className="sm:max-w-md md:max-w-2xl h-[80vh] bg-zinc-900 border border-zinc-800 rounded-2xl p-0 overflow-hidden flex flex-col gap-0">
-    {/* Header */}
-    <div className="h-14 flex items-center justify-around px-5 border-b border-zinc-800 shrink-0">
-      <h2 onClick={()=> setSelected("social")} className={`cursor-pointer text-sm ${selected == 'social' ? 'border-b-2 border-yellow-500 text-red-500': 'text-zinc-100'} font-semibold tracking-wide`}>
-        Social
-      </h2>
-      <h2 onClick={() =>setSelected("chat")} className={`cursor-pointer text-sm ${selected == 'chat' ? 'border-b-2 border-yellow-500 text-red-500': 'text-zinc-100'} font-semibold tracking-wide`}>
-        Chats
-      </h2>
-    </div>
+      <DialogContent className="sm:max-w-md md:max-w-2xl h-[80vh] bg-zinc-900 border border-zinc-800 rounded-2xl p-0 overflow-hidden flex flex-col gap-0">
+        {/* Header */}
+        <div className="h-14 flex items-center justify-around px-5 border-b border-zinc-800 shrink-0">
+          <h2
+            onClick={() => setSelected("social")}
+            className={`cursor-pointer text-sm ${selected == "social" ? "border-b-2 border-yellow-500 text-red-500" : "text-zinc-100"} font-semibold tracking-wide`}
+          >
+            Social
+          </h2>
+          <h2
+            onClick={() => setSelected("chat")}
+            className={`relative cursor-pointer text-sm ${selected == "chat" ? "border-b-2 border-yellow-500 text-red-500" : "text-zinc-100"} font-semibold tracking-wide`}
+          >
+            Chats
+            {chatUnread > 0 && (
+              <span className="absolute -top-2 -right-5 min-w-4 h-4 px-1 rounded-full bg-indigo-600 text-white text-[10px] font-semibold flex items-center justify-center">
+                {chatUnread > 9 ? "9+" : chatUnread}
+              </span>
+            )}
+          </h2>
+        </div>
 
-    {selected == 'social' ? <><div className="h-12 flex items-center border-b border-zinc-800 px-2 shrink-0">
-      {TABS.map((t) => (
-        <button
-          key={t}
-          onClick={() => setTab(t)}
-          className={`h-full flex items-center gap-1.5 px-3 text-xs font-medium transition-colors relative ${
-            tab === t
-              ? "text-zinc-100"
-              : "text-zinc-500 hover:text-zinc-300"
-          }`}
-        >
-          {TAB_ICONS[t]}
-          {t}
-          {tab === t && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
-          )}
-        </button>
-      ))}
-    </div>
-    <div className="flex-1 overflow-y-auto">
-      <NetworkContent tab={tab} />
-    </div></> : <div className="flex-1 overflow-y-auto"><ChatContent /></div>}
-  </DialogContent>
-</Dialog>
+        {selected == "social" ? (
+          <>
+            <div className="h-12 flex items-center border-b border-zinc-800 px-2 shrink-0">
+              {TABS.map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`h-full flex items-center gap-1.5 px-3 text-xs font-medium transition-colors relative ${
+                    tab === t ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  {TAB_ICONS[t]}
+                  {t}
+                  {tab === t && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
+                  )}
+                </button>
+              ))}
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <NetworkContent tab={tab} />
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            <ChatContent onUnreadChange={handleUnreadChange} />
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
 // ─── Content switcher ─────────────────────────────────────────────────────────
 
 function NetworkContent({ tab }: { tab: Tab }) {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +195,17 @@ function NetworkContent({ tab }: { tab: Tab }) {
   );
 
   useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      setLoading(false);
+      setError("Please sign in to view your network.");
+      setList([]);
+      return;
+    }
+
     // A fresh AbortController per tab/retry. If the tab changes (or the
     // component unmounts) before this request finishes, we cancel it — so a
     // slow response from a tab you've since navigated away from can never
@@ -203,7 +268,7 @@ function NetworkContent({ tab }: { tab: Tab }) {
 
     load();
     return () => controller.abort();
-  }, [tab, base, get, reloadKey]);
+  }, [tab, base, get, reloadKey, isLoaded, isSignedIn]);
 
   const remove = (id: string) =>
     setList((prev) => prev.filter((item) => (item._id ?? item.clerkId) !== id));
@@ -288,24 +353,49 @@ function PersonRow({
   const base = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
   const openChat = async () => {
+    const friendId = person?._id ? String(person._id) : person?.clerkId ? String(person.clerkId) : "";
+    if (!friendId) {
+      toast.error("Cannot open chat — missing user id");
+      return;
+    }
+    if (!base) {
+      toast.error("Backend URL is not configured");
+      return;
+    }
+
     setBusy(true);
     try {
       const token = await getToken();
+      if (!token) {
+        toast.error("Please sign in again");
+        return;
+      }
+
       const res = await api.post(
         `${base}/api/chat/open`,
-        { friendId: person._id },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { friendId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 20000,
+        }
       );
 
       const conversationId = res.data?.conversationId;
       if (!conversationId) {
-        throw new Error("Conversation not created");
+        throw new Error(res.data?.message ?? "Conversation not created");
       }
 
       router.push(`/chat/${conversationId}`);
     } catch (err: any) {
       const timedOut = err?.code === "ECONNABORTED";
-      toast.error(timedOut ? "That took too long — please try again." : err?.message ?? "Failed to open chat");
+      const status = err?.response?.status;
+      const message = timedOut
+        ? "That took too long — is the backend running?"
+        : err?.response?.data?.message ??
+          (status === 404 ? "Friend not found" : err?.message) ??
+          "Failed to open chat";
+      console.error("[Network] openChat failed:", status, err?.response?.data ?? err);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -460,8 +550,8 @@ function ActionButton({
   );
 }
 
-function ChatContent() {
-  const { getToken } = useAuth();
+function ChatContent({ onUnreadChange }: { onUnreadChange?: (count: number) => void }) {
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
   const [list, setList] = useState<ConversationRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -479,7 +569,12 @@ function ChatContent() {
           headers: { Authorization: `Bearer ${token}` },
           signal,
         });
-        setList(Array.isArray(res.data) ? res.data : res.data?.conversations ?? []);
+        const rows: ConversationRow[] = Array.isArray(res.data)
+          ? res.data
+          : res.data?.conversations ?? [];
+        setList(rows);
+        const total = rows.reduce((sum, row) => sum + (row.unreadCount || 0), 0);
+        onUnreadChange?.(total);
       } catch (err: any) {
         if (axios.isCancel(err) || signal.aborted) return;
         const timedOut = err?.code === "ECONNABORTED";
@@ -492,14 +587,25 @@ function ChatContent() {
         if (!signal.aborted) setLoading(false);
       }
     },
-    [base, getToken]
+    [base, getToken, onUnreadChange]
   );
 
   useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    if (!isSignedIn) {
+      setLoading(false);
+      setError("Please sign in to view your chats.");
+      setList([]);
+      return;
+    }
+
     const controller = new AbortController();
     loadChats(controller.signal);
     return () => controller.abort();
-  }, [loadChats, reloadKey]);
+  }, [loadChats, reloadKey, isLoaded, isSignedIn]);
 
   if (loading) {
     return (

@@ -56,17 +56,33 @@ export default function ConversationPage() {
   useEffect(() => {
     if (!user?.id || !conversationId) return;
 
-    socket.emit("join-chat", { conversationId, clerkId: user.id });
+    const join = () => {
+      socket.emit("join-chat", { conversationId, clerkId: user.id });
+    };
+
+    // Ensure we join even if the socket reconnects mid-chat.
+    if (socket.connected) join();
+    socket.on("connect", join);
 
     const handleNewMessage = (message: MessageItem) => {
       if (String(message.conversationId) !== String(conversationId)) return;
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        if (prev.some((m) => String(m._id) === String(message._id))) return prev;
+        return [...prev, message];
+      });
+    };
+
+    const handleChatError = (payload: { message?: string }) => {
+      toast.error(payload?.message ?? "Failed to send message");
     };
 
     socket.on("new-message", handleNewMessage);
+    socket.on("chat-error", handleChatError);
 
     return () => {
+      socket.off("connect", join);
       socket.off("new-message", handleNewMessage);
+      socket.off("chat-error", handleChatError);
       socket.emit("leave-chat", { conversationId });
     };
   }, [conversationId, user?.id]);
@@ -80,20 +96,21 @@ export default function ConversationPage() {
         const token = await getToken();
         const headers = { Authorization: `Bearer ${token}` };
 
+        // Load this conversation + messages only (not the whole inbox).
         const [conversationRes, messagesRes] = await Promise.all([
-          axios.get(`${backendUrl}/api/chat`, { headers, signal: controller.signal }),
-          axios.get(`${backendUrl}/api/chat/${conversationId}/messages`, { headers, signal: controller.signal }),
+          axios.get(`${backendUrl}/api/chat/${conversationId}`, {
+            headers,
+            signal: controller.signal,
+            timeout: 15000,
+          }),
+          axios.get(`${backendUrl}/api/chat/${conversationId}/messages`, {
+            headers,
+            signal: controller.signal,
+            timeout: 15000,
+          }),
         ]);
 
-        const conversations = Array.isArray(conversationRes.data)
-          ? conversationRes.data
-          : conversationRes.data?.conversations ?? [];
-
-        const foundConversation = conversations.find(
-          (item: ConversationSummary) => String(item.conversationId) === String(conversationId)
-        ) ?? null;
-
-        setConversation(foundConversation);
+        setConversation(conversationRes.data ?? null);
         setMessages(Array.isArray(messagesRes.data) ? messagesRes.data : []);
       } catch (error: any) {
         if (controller.signal.aborted) return;
@@ -104,19 +121,20 @@ export default function ConversationPage() {
       }
     };
 
-    load();
+    if (conversationId) load();
     return () => controller.abort();
   }, [backendUrl, conversationId, getToken]);
 
   const sendMessage = async () => {
     const trimmed = text.trim();
-    if (!trimmed || !conversationId) return;
+    if (!trimmed || !conversationId || !user?.id) return;
 
     setSending(true);
     try {
       socket.emit("send-message", {
         conversationId,
         text: trimmed,
+        clerkId: user.id,
       });
       setText("");
     } finally {

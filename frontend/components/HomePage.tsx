@@ -27,7 +27,7 @@ export default function HomePage() {
       {value == 'rooms' && <section className="sm:min-h-[18vh] md:min-h-[17vh] w-full flex py-3 justify-center items-center font-semibold sm:text-2xl md:text-3xl">
   Find Your Voice. Speak Up.
 </section>}
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 overflow-y-auto">
         {value === "rooms" ? <GetRooms rooms={rooms} loading={loading} refresh={refreshRooms} /> : <WorldChat />}
       </main>
     </div>

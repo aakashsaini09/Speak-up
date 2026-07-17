@@ -146,9 +146,21 @@ function DialogDescription({
     <DialogPrimitive.Description
       data-slot="dialog-description"
       className={cn(
-        "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
-        className
-      )}
+  // Base
+  "fixed z-50 grid w-full bg-popover text-sm text-popover-foreground outline-none",
+  "ring-1 ring-foreground/10",
+  // Mobile — bottom sheet
+  "bottom-0 left-0 right-0 rounded-t-2xl max-h-[92dvh] overflow-y-auto",
+  "data-open:animate-in data-open:slide-in-from-bottom-4 data-open:fade-in-0",
+  "data-closed:animate-out data-closed:slide-out-to-bottom-4 data-closed:fade-out-0",
+  // Desktop — centered modal
+  "sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2",
+  "sm:max-w-lg sm:rounded-2xl sm:max-h-[90dvh]",
+  "sm:data-open:zoom-in-95 sm:data-closed:zoom-out-95",
+  "sm:data-open:slide-in-from-bottom-0 sm:data-closed:slide-out-to-bottom-0",
+  "duration-200",
+  className
+)}
       {...props}
     />
   )

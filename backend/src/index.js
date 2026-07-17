@@ -27,8 +27,8 @@ app.use(
     credentials: true,
   })
 );
-app.use("/api/clerk", router);
 app.use(express.json());
+app.use("/api/clerk", router);
 app.use("/api/room", roomRoutes);
 app.use("/api/chat", chatRoute);
 app.use("/api/messages", messageRouter);

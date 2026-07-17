@@ -46,8 +46,8 @@ export const initializeSocket = async (server) => {
 
       try {
         const [user, conversation] = await Promise.all([
-          User.findOne({ clerkId }).select("_id clerkId"),
-          Conversation.findById(conversationId).select("participants"),
+          User.findOne({ clerkId }).select("_id").lean(),
+          Conversation.findById(conversationId).select("participants").lean(),
         ]);
 
         if (!user || !conversation) return;
@@ -55,16 +55,17 @@ export const initializeSocket = async (server) => {
         const isParticipant = conversation.participants.some(
           (participantId) => String(participantId) === String(user._id)
         );
-
         if (!isParticipant) return;
 
-        socket.chatConversationId = conversationId;
+        socket.chatConversationId = String(conversationId);
         socket.chatUserId = String(user._id);
         socket.chatClerkId = clerkId;
-        socket.join(conversationId);
+        socket.join(String(conversationId));
 
-        conversation.lastReadAt.set(String(user._id), new Date());
-        await conversation.save();
+        Conversation.updateOne(
+          { _id: conversationId },
+          { $set: { [`lastReadAt.${user._id}`]: new Date() } }
+        ).catch(() => {});
       } catch (error) {
         console.error("[Chat] join failed:", error);
       }
@@ -73,30 +74,49 @@ export const initializeSocket = async (server) => {
     socket.on("send-message", async (data) => {
       const conversationId = data?.conversationId ?? socket.chatConversationId;
       const text = typeof data?.text === "string" ? data.text : "";
-
-      if (!conversationId || !socket.chatUserId) return;
+      let senderId = socket.chatUserId;
 
       try {
+        if (!senderId && data?.clerkId) {
+          const user = await User.findOne({ clerkId: data.clerkId }).select("_id").lean();
+          senderId = user ? String(user._id) : undefined;
+          if (senderId) {
+            socket.chatUserId = senderId;
+            socket.chatClerkId = data.clerkId;
+            socket.chatConversationId = conversationId;
+          }
+        }
+
+        if (!conversationId || !senderId) {
+          socket.emit("chat-error", {
+            message: "Not connected to this chat yet — try again in a moment.",
+          });
+          return;
+        }
+
+        socket.join(String(conversationId));
+
         const savedMessage = await saveChatMessage({
           conversationId,
-          senderId: socket.chatUserId,
+          senderId,
           text,
         });
 
-        io.to(conversationId).emit("new-message", savedMessage);
+        io.to(String(conversationId)).emit("new-message", savedMessage);
       } catch (error) {
+        console.error("[Chat] send failed:", error);
         socket.emit("chat-error", {
           message: error instanceof Error ? error.message : "Failed to send message",
         });
       }
     });
 
-    socket.on("leave-chat", async (payload) => {
+    socket.on("leave-chat", (payload) => {
       const conversationId = typeof payload === "string" ? payload : payload?.conversationId;
       if (!conversationId) return;
 
-      socket.leave(conversationId);
-      if (socket.chatConversationId === conversationId) {
+      socket.leave(String(conversationId));
+      if (socket.chatConversationId === String(conversationId)) {
         socket.chatConversationId = undefined;
       }
     });
