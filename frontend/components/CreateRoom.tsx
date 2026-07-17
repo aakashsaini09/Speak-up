@@ -130,7 +130,7 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
     return (
         <Dialog open={popup} onOpenChange={setPopup}>
     <DialogContent
-        className="bg-zinc-950 text-white p-0 gap-0 border-zinc-800"
+        className="bg-zinc-950 text-white p-0 gap-0 border-zinc-800 min-w-[43vw]"
         showCloseButton={false}
     >
         {/* Drag handle — mobile only visual cue */}
@@ -149,9 +149,6 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                         <DialogTitle className="text-white text-base sm:text-lg font-bold">
                             Create a Room
                         </DialogTitle>
-                        <DialogDescription className="text-zinc-500 text-xs sm:text-sm mt-0.5">
-                            Be respectful with the title
-                        </DialogDescription>
                     </div>
                 </div>
                 {/* Close button — top right on desktop, hidden on mobile
@@ -268,18 +265,18 @@ export default function CreateRoomPopup({ popup, setPopup, refetchRooms }: Props
                     id="maxUser"
                     type="number"
                     min={1}
-                    max={6}
+                    max={10}
                     value={roomData.maxUser}
                     onChange={e => {
                         const val = parseInt(e.target.value, 10);
                         setRoomData(prev => ({
                             ...prev,
-                            maxUser: isNaN(val) ? 3 : Math.min(6, Math.max(1, val)),
+                            maxUser: isNaN(val) ? 3 : Math.min(10, Math.max(1, val)),
                         }));
                     }}
                     className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:ring-2 focus:ring-violet-600/50 focus:border-transparent transition-all h-10"
                 />
-                <span className="text-xs text-zinc-600">1 – 6 people</span>
+                <span className="text-xs text-zinc-600">1 – 10 people</span>
             </div>
         </div>
 

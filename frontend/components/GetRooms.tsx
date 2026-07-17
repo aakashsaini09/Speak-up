@@ -50,7 +50,7 @@ export const fetchRoomFunction = async (
 };
 
 export default function GetRooms({ rooms, loading, refresh }: GetRoomsProps) {
-    const LABELS = [ "All", "Software Development", "Travel & Culture", "Movies & TV", "Music & Arts", "Sports & Recreation", "Food & Cooking", "Technology", "Business & Entrepreneurship", "Education & Learning", "Health & Wellness"];
+    const LABELS = [ "All", "Software Development", "Travel & Culture", "Movies & TV", "Music", "Sports", "Food & Cooking", "Technology", "Business", "Education & Learning", "Health & Wellness"];
     const LANGUAGES = ["All", "English", "Hindi", "Japanese", "Tamil", "Telugu", "Marathi", "Chinese", "Korean", "French", "Italian",];
 
     useEffect(() => { refresh(); }, []);
