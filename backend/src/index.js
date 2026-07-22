@@ -14,6 +14,7 @@ import friendRoutes from "./routes/friends.route.js";
 import uploadRoute from "./routes/upload.routes.js";
 import chatRoute from "./routes/chat.route.js";
 import { startChatMessageCleanupJob } from "./services/cleanUpChatMessages.js";
+import { getTurnCredentials } from "./services/turnServer.js";
 const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
@@ -34,6 +35,7 @@ app.use("/api/chat", chatRoute);
 app.use("/api/messages", messageRouter);
 app.use("/api/friend", friendRoutes);
 app.use("/api/upload", uploadRoute);
+app.get("/api/turn-credentials", getTurnCredentials)
 const server = http.createServer(app);
 
 // Initialize Socket.IO

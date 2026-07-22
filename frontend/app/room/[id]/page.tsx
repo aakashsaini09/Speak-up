@@ -40,7 +40,9 @@ type FriendRelation =
 type FriendRelations = Record<string, FriendRelation>;
 
 const NONE_RELATION: FriendRelation = { status: "none" };
- 
+const response = await fetch("/api/turn-credentials");
+const turn = await response.json();
+
 const RTC_CONFIG = {
   iceServers: [
     {
@@ -50,9 +52,9 @@ const RTC_CONFIG = {
       ],
     },
     {
-      urls: "turn:turn.speak-up.online:3478",
-      username: "speakup",
-      credential: "testing123",
+      urls: turn.urls,
+      username: turn.username,
+      credential: turn.credential,
     },
   ],
 };
