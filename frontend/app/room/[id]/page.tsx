@@ -14,6 +14,7 @@ import ChatPanel from "@/components/ChatPanel";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "sonner";
+import { getRTCConfiguration } from "@/app/services/turnService";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,25 +41,6 @@ type FriendRelation =
 type FriendRelations = Record<string, FriendRelation>;
 
 const NONE_RELATION: FriendRelation = { status: "none" };
-const response = await fetch("/api/turn-credentials");
-const turn = await response.json();
-
-const RTC_CONFIG = {
-  iceServers: [
-    {
-      urls: [
-        "stun:stun.l.google.com:19302",
-        "stun:stun1.l.google.com:19302",
-      ],
-    },
-    {
-      urls: turn.urls,
-      username: turn.username,
-      credential: turn.credential,
-    },
-  ],
-};
- 
 export default function RoomPage() {
   const router = useRouter();
   const { user } = useUser();
@@ -89,7 +71,19 @@ export default function RoomPage() {
   const localStream = useRef<MediaStream | null>(null);
   const localVideoStream = useRef<MediaStream | null>(null);
   const iceCandidateBuffers = useRef(new Map<string, RTCIceCandidate[]>());
- 
+  const rtcConfigRef = useRef<RTCConfiguration | null>(null);
+  useEffect(() => {
+      async function loadRTC() {
+          rtcConfigRef.current = await getRTCConfiguration(
+              backendUrl,
+              getToken
+          );
+      }
+
+      if (user) {
+          loadRTC();
+      }
+  }, [user]);
   // ── Audio refs ────────────────────────────────────────────────────────────
   const audioCtx = useRef<AudioContext | null>(null);
   const remoteNodes = useRef(
@@ -154,7 +148,7 @@ export default function RoomPage() {
  
   const createPeerConnection = useCallback((userId: string): RTCPeerConnection => {
     peerConnections.current.get(userId)?.close();
-    const pc = new RTCPeerConnection(RTC_CONFIG);
+    const pc = new RTCPeerConnection(rtcConfigRef.current!);
  
     localStream.current?.getAudioTracks().forEach(track => {
       pc.addTrack(track, localStream.current!);
