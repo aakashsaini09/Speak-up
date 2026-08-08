@@ -1,10 +1,13 @@
 <br />
+
 <div align="center">
 
 # SpeakUp 🎙️
 
 <p align="center">
-  A real-time language practice platform where users can create voice rooms, connect with people worldwide, and improve their speaking skills through live conversations.
+  A real-time language learning and communication platform where users can create rooms,
+  practice languages through live conversations, connect with people worldwide,
+  and build meaningful social connections.
   <br />
   <br />
   <a href="https://speak-up.online"><strong>Explore the App »</strong></a>
@@ -24,197 +27,132 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="./frontend//public/screenshot.png" alt="Home Page" width="800">
+  <img src="./frontend/public/screenshot.png" alt="SpeakUp Home Page" width="800">
 </p>
 
 ---
 
 ## ✨ Features
 
-- 🎙️ Real-time voice communication using WebRTC
-- 🌎 Global community chat
+### 🏠 Rooms & Language Practice
+
 - 🏠 Create and join language-specific rooms
+- 🌎 Discover rooms created by users around the world
+- 🔎 Filter rooms based on language
 - 👥 Live participant tracking
-- 🔄 Real-time updates with Socket.IO
-- 🔐 Authentication with Clerk
+- 🎙️ Real-time voice communication using WebRTC
+- 🎥 Live video communication
+- 🖥️ Screen sharing
+- 🛡️ Room administration and participant management
+- 🚫 Room admins can remove participants from rooms
 - 🧹 Automatic cleanup of inactive rooms
-- 📱 Responsive design for desktop and mobile
+- 🤖 AI-powered room title generation
+
+### 💬 Three Types of Chat
+
+SpeakUp provides three different communication spaces:
+
+#### 🏠 Room Chat
+
+A temporary chat available inside each room.
+
+- 💬 Real-time text messaging
+- 🖼️ Image sharing
+- 🎬 Video/media sharing
+- ⚡ Real-time updates using Socket.IO
+- 🧹 Messages and media are temporary and tied to the room lifecycle
+
+#### 🌎 World Chat
+
+A global community chat where users from across the platform can communicate and interact.
+
+#### 💌 Personal Chat
+
+Private one-to-one conversations between users.
+
+- 👤 Chat directly with friends
+- 💬 Persistent conversation history
+- ⚡ Real-time messaging
+- 📚 Access previous conversations from the Chat section
+
+### 🤝 Social Network
+
+SpeakUp includes a dedicated **Social Hub** for managing connections.
+
+- ➕ Send friend requests
+- ❌ Cancel sent requests
+- ✅ Accept incoming requests
+- 🚫 Reject incoming requests
+- 👥 View friends
+- ➡️ Follow users
+- ↩️ Unfollow users
+- ❌ Unfriend users
+- 🔎 View all connections
+- 📩 Manage incoming requests
+- 💬 Start a personal conversation directly from a user's profile
+
+The Social Hub provides four main views:
+
+- **All** — Friends + Following
+- **Friends** — Users you are connected with
+- **Following** — Users you follow
+- **Requests** — Incoming friend requests
+
+### 🔐 Authentication & User Management
+
+- 🔐 Secure authentication using Clerk
+- 👤 User profiles
+- 🔄 Clerk webhook integration
+- 🛡️ Protected backend routes
+- 🔑 Token-based API authentication
+
+### 📱 User Experience
+
+- 📱 Responsive design for desktop, tablet, and mobile
+- ⚡ Real-time UI updates
+- 🎨 Modern and interactive interface
+- 🔔 User feedback and notifications
+- 🧭 Simple navigation between rooms, social connections, and chats
 
 ---
 
-## 🚧 Challenges & Learnings
+## 🏗️ Architecture
 
-This project pushed me into technologies I had never worked with before, especially WebRTC and real-time communication systems.
+SpeakUp uses a full-stack architecture combining REST APIs, WebSockets, and WebRTC.
 
-Some of the challenges included:
+```text
+                         ┌─────────────────────┐
+                         │      User           │
+                         │  Browser / Mobile   │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │   Next.js Frontend  │
+                         │ React + TypeScript  │
+                         └──────────┬──────────┘
+                                    │
+                     ┌──────────────┴──────────────┐
+                     │                             │
+                     ▼                             ▼
+              ┌──────────────┐              ┌──────────────┐
+              │   REST API   │              │  Socket.IO   │
+              │   Express    │              │   Server     │
+              └──────┬───────┘              └──────┬───────┘
+                     │                             │
+                     ▼                             ▼
+              ┌──────────────┐              ┌──────────────┐
+              │   MongoDB    │              │    WebRTC    │
+              │   Database   │              │ Audio/Video  │
+              └──────────────┘              └──────────────┘
+                                                    │
+                                                    ▼
+                                             ┌──────────────┐
+                                             │ TURN Server  │
+                                             │   coTURN     │
+                                             └──────────────┘
 
-- Implementing WebRTC peer-to-peer audio connections
-- Managing SDP offer/answer exchange
-- Handling ICE candidate signaling through Socket.IO
-- Synchronizing live participants across rooms
-- Managing room lifecycle and cleanup
-- Deploying and configuring Clerk webhooks in production
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- Clerk Authentication
-- Socket.IO Client
-- WebRTC
-
-### Backend
-
-- Node.js
-- Express.js
-- MongoDB
-- Socket.IO
-- Clerk Webhooks
-
----
-
-## 📂 Project Structure
-
-```bash
-SpeakUp
-│
-├── frontend/
-│   └── Next.js Application
-│
-└── backend/
-    └── Express + Socket.IO Server
-````
-
----
-
-## ⚙️ Environment Variables
-
-### Frontend (.env)
-
-```env
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_BACKEND_URL=
-```
-
-### Backend (.env)
-
-```env
-CLERK_WEBHOOK_SECRET=
-CLERK_SECRET_KEY=
-MONGO_URL=
-PORT=3001
-```
-
----
-
-## 🚀 Local Setup
-
-### Clone Repository
-
-```bash
-git clone https://github.com/aakashsaini09/SpeakUp.git
-cd SpeakUp
-```
-
-### Install Dependencies
-
-Frontend
-
-```bash
-cd frontend
-npm install
-```
-
-Backend
-
-```bash
-cd backend
-npm install
-```
-
----
-
-## ▶️ Run Backend
-
-```bash
-cd backend
-npm run dev
-```
-
----
-
-## ▶️ Run Frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
----
-
-## 🔗 LocalTunnel Setup (Required for New User Registration)
-
-Open a third terminal:
-
-```bash
-cd backend
-lt --port 3001
-```
-
-A LocalTunnel URL will be generated:
-
-```bash
-https://example.loca.lt
-```
-
-Open the generated URL in your browser and complete the verification process.
-
-Then create a Clerk webhook:
-
-```bash
-https://example.loca.lt/api/clerk/webhook
-```
-
-This is only required when testing new user registration locally.
-
----
-
-## 🌐 Live Demo
-
-https://speak-up.online
-
----
-
-## 🔮 Future Improvements
-
-* 🎥 Video Calling
-* 🤝 Friend System
-* 💬 Direct Messaging
-* 🛡️ Room Moderation
-* 🏆 User Profiles
-* 🎯 Language Matching
-* 🔊 Improved Audio Quality
-
----
-
-## 👨‍💻 Author
-
-**Aakash Saini**
-
-* Portfolio: https://aakashsaini.in
-* LinkedIn: https://www.linkedin.com/in/-aakashsaini/
-* GitHub: https://github.com/aakashsaini09
-
----
-
-<div align="center">
-
-Made with ❤️ using Next.js, Socket.IO and WebRTC
-
-</div>
+                     ┌──────────────────────────────┐
+                     │       Cloudflare R2          │
+                     │     Media/Object Storage     │
+                     └──────────────────────────────┘
