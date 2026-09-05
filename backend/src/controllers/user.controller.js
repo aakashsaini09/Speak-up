@@ -277,10 +277,12 @@ export const incomingReq = async (req, res) => {
     })
     .populate("sender", "clerkId firstName lastName imageUrl");
 
-    const following = requests.map(req => ({
-      friendshipId: req._id,
-      ...req.sender.toObject(),
-    }));
+    const following = requests
+      .filter(request => request.sender)
+      .map(request => ({
+        friendshipId: request._id,
+        ...request.sender.toObject(),
+      }));
     
     return res.status(200).json({
       success: true,
@@ -290,7 +292,7 @@ export const incomingReq = async (req, res) => {
     console.error(error);
     return res.status(500).json({
       success: false,
-      message: "Failed to accept friend request.",
+      message: "Failed to load incoming friend requests.",
     });
   }
 };
